@@ -36,6 +36,12 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		EquipTime -= DeltaSeconds;
 		bEquipWeapon = EquipTime > 0;
 	}
+
+	if(bHit)
+	{
+		HitTime -= DeltaSeconds;
+		bHit = HitTime > 0;
+	}
 }
 
 void UARPG_AnimInstance::EquipWeaponTrigger()
@@ -44,7 +50,14 @@ void UARPG_AnimInstance::EquipWeaponTrigger()
 	EquipTime = 1.f;
 }
 
-void UARPG_AnimInstance::SetEquipWeaponIndex(int InWeaponIndex)
+void UARPG_AnimInstance::SetEquipWeaponIndex(const int InWeaponIndex)
 {
 	EquipWeaponIndex = InWeaponIndex;
+}
+
+void UARPG_AnimInstance::HitTrigger(const float InHitAngle)
+{
+	bHit = true;
+	HitTime = 0.2f;
+	HitAngle = InHitAngle;
 }

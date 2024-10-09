@@ -64,11 +64,13 @@ public:
 
 private:
 
+	UARPG_AnimInstance* AnimInstance;
 	AARPG_WeaponBase* CreateWeapon(TSubclassOf<AARPG_WeaponBase> WeaponBase);
 	TArray<AARPG_WeaponBase*> EquipWeapons;
 	TArray<FARPG_CombatData> CombatDatas;
 	int CurrentWeaponIndex;
 	bool bEquipping;
+
 
 	virtual void WeaponEquip_Implementation(bool InEquipping) override;
 public:

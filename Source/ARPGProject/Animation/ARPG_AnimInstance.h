@@ -17,6 +17,7 @@ class ARPGPROJECT_API UARPG_AnimInstance : public UAnimInstance
 public:
 	void EquipWeaponTrigger();
 	void SetEquipWeaponIndex(int InWeaponIndex);
+	void HitTrigger(float InHitAngle);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
@@ -33,6 +34,7 @@ private:
 	bool ShouldMove;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	bool IsFalling;
+	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
 	bool bEquipWeapon;
@@ -41,6 +43,10 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
 	int EquipWeaponIndex;
 
-
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Hit, meta = (AllowPrivateAccess = true))
+	bool bHit;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
+	float HitTime;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Hit, meta = (AllowPrivateAccess = true))
+	float HitAngle;
 };

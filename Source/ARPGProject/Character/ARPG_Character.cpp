@@ -64,6 +64,14 @@ AARPG_Character::AARPG_Character()
 void AARPG_Character::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	
+}
+
+void AARPG_Character::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
 	if (const UARPG_GameInstance* GameInstance = Cast<UARPG_GameInstance>(GetGameInstance()))
 	{
 		const FString RowName("1");
@@ -81,7 +89,7 @@ void AARPG_Character::BeginPlay()
 				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
 				CombatDatas.Add(FARPG_CombatData());
 			}
-			
+
 		}
 		else
 		{
@@ -109,16 +117,10 @@ void AARPG_Character::BeginPlay()
 			// 무기 데이터를 찾지 못한 경우
 			UE_LOG(LogTemp, Warning, TEXT("Weapon data for row %s not found"), *RowName);
 		}
-
-		SetWeapon(0);
 	}
-	
-}
 
-void AARPG_Character::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-	
+	AnimInstance = Cast<UARPG_AnimInstance>(GetMesh()->GetAnimInstance());
+	SetWeapon(0);
 }
 
 float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
@@ -143,15 +145,16 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 			
 			true                          // 자동 파괴 여부 (기본값 true)
 		);
-
+		
 		//const FRotator LookAtRotation = UKismetMathLibrary::FindRelativeLookAtRotation(DamageCauser->GetActorTransform(), GetActorLocation());
-		//ARPG_AnimInstance->SetHit(LookAtRotation.Yaw);
+		const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PointDamageEvent.HitInfo.Location, GetActorLocation());
+		AnimInstance->HitTrigger(LookAtRotation.Yaw);
 		
 	}
 	
 	//const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(DamageCauser->GetActorRotation());
 	const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(EventInstigator->GetPawn()->GetActorRotation());
-	const FVector LaunchVelocity = ForwardVector * 700.f;
+	const FVector LaunchVelocity = ForwardVector * 350.f;
 	LaunchCharacter(LaunchVelocity, false, false);
 
 	return ResultDamage;
@@ -251,8 +254,8 @@ void AARPG_Character::WeaponChange()
 
 void AARPG_Character::SetWeapon(int NextWeaponIndex)
 {
-	UARPG_AnimInstance* Anim = Cast<UARPG_AnimInstance>(GetMesh()->GetAnimInstance());
-	if(Anim == nullptr)
+	
+	if(AnimInstance == nullptr)
 	{
 		return;
 	}
@@ -260,15 +263,19 @@ void AARPG_Character::SetWeapon(int NextWeaponIndex)
 	{
 		return;
 	}
+	if(CombatDatas.Num() == 0)
+	{
+		return;
+	}
 
-	Anim->EquipWeaponTrigger();
+	AnimInstance->EquipWeaponTrigger();
 	NextWeaponIndex = NextWeaponIndex < EquipWeapons.Num() ? NextWeaponIndex : 0;
 	CurrentWeaponIndex = NextWeaponIndex;
 	FARPG_CombatData CombatData = CombatDatas[CurrentWeaponIndex];
 	const int CombatPoseIndex = CombatData.CombatPoseIndex;
 	MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
 
-	Anim->SetEquipWeaponIndex(CombatPoseIndex);
+	AnimInstance->SetEquipWeaponIndex(CombatPoseIndex);
 
 	if(CurrentWeapon != nullptr)
 	{

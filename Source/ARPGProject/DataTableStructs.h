@@ -42,6 +42,13 @@ public:
 
 };
 
-inline FARPG_CombatData::FARPG_CombatData()
+inline FARPG_CombatData::FARPG_CombatData(): CombatPoseIndex(0), bChargedAttack(false)
 {
 }
+
+USTRUCT(BlueprintType)
+struct FARPG_CharacterData: public FTableRowBase
+{
+	GENERATED_BODY()
+	
+};

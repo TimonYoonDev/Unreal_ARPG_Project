@@ -15,8 +15,10 @@ AARPG_WeaponBase::AARPG_WeaponBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	SceneComponent = CreateDefaultSubobject<USceneComponent>("Pivot");
+	SceneComponent->SetupAttachment(RootComponent);
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
-	StaticMeshComponent->SetupAttachment(RootComponent);
+	StaticMeshComponent->SetupAttachment(SceneComponent);
 
 	if (StaticMesh)
 	{
@@ -56,8 +58,8 @@ void AARPG_WeaponBase::AttackTrace()
 	const FVector EndSocketLocation = StaticMeshComponent->GetSocketLocation(FName("E"));
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetOwner());
-
-	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, ECollisionChannel::ECC_Pawn, FCollisionShape::MakeSphere(12.f), QueryParams);
+	
+	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, ECollisionChannel::ECC_GameTraceChannel1, FCollisionShape::MakeSphere(12.f), QueryParams);
 	bool bHitCheck = false;
 	for (auto OutHit : OutHits)
 	{
