@@ -41,4 +41,5 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponEquip(const bool InEquipping);
 	virtual void WeaponEquip_Implementation(const bool InEquipping) = 0;
+
 };
