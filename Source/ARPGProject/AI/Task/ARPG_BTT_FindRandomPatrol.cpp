@@ -11,41 +11,21 @@
 
 EBTNodeResult::Type UARPG_BTT_FindRandomPatrol::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	EBTNodeResult::Type Result = EBTNodeResult::Failed;
+	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 
-	const AAIController* AIController = OwnerComp.GetAIOwner();
-	if (nullptr == AIController)
-	{
-		return Result;
-	}
-	AActor* Owner = AIController->GetPawn();
-	if (nullptr == Owner)
-	{
-		return Result;
-	}
-
-	if(AICharacterInterface.GetObject() == nullptr)
-	{
-		if(Owner->Implements<UARPG_AICharacterInterface>())
-		{
-			AICharacterInterface.SetObject(Owner);
-			AICharacterInterface.SetInterface(Cast<IARPG_AICharacterInterface>(Owner));
-		}
-	}
-	
 	if(AICharacterInterface.GetObject())
 	{
 		AICharacterInterface.GetInterface()->Execute_SetWalkSpeed(AICharacterInterface.GetObject(), PatrolSpeed);
 
 		FVector NextPatrolLocation;
-		if(UNavigationSystemV1::K2_GetRandomReachablePointInRadius(GetWorld(), Owner->GetActorLocation(), NextPatrolLocation, PatrolRadius))
+		if(UNavigationSystemV1::K2_GetRandomReachablePointInRadius(GetWorld(), OwnerActor->GetActorLocation(), NextPatrolLocation, PatrolRadius))
 		{
 			OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, NextPatrolLocation);
 			Result = EBTNodeResult::Succeeded;
 		}
 		else
 		{
-			OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, Owner->GetActorLocation());
+			OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, OwnerActor->GetActorLocation());
 			Result = EBTNodeResult::Succeeded;
 		}
 	}

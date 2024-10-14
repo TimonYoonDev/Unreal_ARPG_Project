@@ -4,7 +4,6 @@
 #include "ARPG_AIController.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "BehaviorTree/BlackboardData.h"
 #include "Perception/AIPerceptionComponent.h"
 
 const FName AARPG_AIController::PatrolLocationKey(TEXT("PatrolLocation"));

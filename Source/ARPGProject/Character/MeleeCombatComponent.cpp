@@ -91,6 +91,7 @@ void UMeleeCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrup
 		return;
 	}
 	bMontagePlaying = false;
+	OnAttackEndDelegate.Broadcast();
 }
 
 bool UMeleeCombatComponent::GetMontagePlaying() const

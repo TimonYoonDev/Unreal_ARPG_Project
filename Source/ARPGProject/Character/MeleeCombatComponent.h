@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "MeleeCombatComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnAttackEndDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ARPGPROJECT_API UMeleeCombatComponent : public UActorComponent
@@ -18,6 +19,8 @@ public:
 	void HeavyAttackComplete(const UAnimMontage* NewHeavyAttackMontage);
 	void SetNextCombo(const UAnimMontage* NewNextComboMontage);
 	void SetStartComboMontage(UAnimMontage* InMontage);
+
+	FOnAttackEndDelegate OnAttackEndDelegate;
 
 protected:
 	virtual void BeginPlay() override;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ARPG_BTT_Base.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "ARPG_BTT_Chase.generated.h"
 
@@ -11,14 +12,14 @@ class IARPG_AICharacterInterface;
  * 
  */
 UCLASS()
-class ARPGPROJECT_API UARPG_BTT_Chase : public UBTTaskNode
+class ARPGPROJECT_API UARPG_BTT_Chase : public UARPG_BTT_Base
 {
 	GENERATED_BODY()
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
 public:
 
-	TScriptInterface<IARPG_AICharacterInterface> AICharacterInterface;
+	
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	float Speed;
 };
