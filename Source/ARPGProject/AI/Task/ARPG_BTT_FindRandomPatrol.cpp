@@ -23,11 +23,6 @@ EBTNodeResult::Type UARPG_BTT_FindRandomPatrol::ExecuteTask(UBehaviorTreeCompone
 	{
 		return Result;
 	}
-	/*auto ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
-	if (nullptr == ControllingPawn)
-	{
-		return EBTNodeResult::Failed;
-	}*/
 
 	if(AICharacterInterface.GetObject() == nullptr)
 	{

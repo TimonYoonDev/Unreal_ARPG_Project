@@ -25,7 +25,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Velocity = CharacterMovement->Velocity;
 	GroundSpeed = Velocity.Size2D();
 
-	ShouldMove = CharacterMovement->GetCurrentAcceleration() != FVector::Zero() && GroundSpeed > 3.f;
+	ShouldMove = /*CharacterMovement->GetCurrentAcceleration() != FVector::Zero() &&*/ GroundSpeed > 3.f;
 	IsFalling = CharacterMovement->IsFalling();
 
 	//Angle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());

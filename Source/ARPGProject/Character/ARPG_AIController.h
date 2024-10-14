@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "ARPG_AIController.generated.h"
 
 UCLASS()
@@ -15,14 +16,21 @@ public:
 	AARPG_AIController();
 
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void PostInitializeComponents() override;
-	virtual bool RunBehaviorTree(UBehaviorTree* BTAsset) override;
 
 	static const FName PatrolLocationKey;
 	static const FName TargetActorKey;
+	static const FName HasLineOfSightKey;
 	
 private:
+
 	TObjectPtr<UBehaviorTree> BehaviorTree;
-	TObjectPtr<UBlackboardData> BlackboardData;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
+	FTimerHandle EnemyTime;
+	float LineOfSightTimer =2.f;
+
+
+	UFUNCTION()
+	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	void OnCleanTarget();
 };

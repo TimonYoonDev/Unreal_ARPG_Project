@@ -18,7 +18,7 @@ EBTNodeResult::Type UARPG_BTT_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 			return Result;
 		}
 
-		AActor* Owner = AIController->GetOwner();
+		AActor* Owner = AIController->GetPawn();
 		if (Owner == nullptr)
 		{
 			return Result;
