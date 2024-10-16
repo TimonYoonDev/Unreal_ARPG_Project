@@ -3,6 +3,8 @@
 
 #include "ARPG_AnimInstance.h"
 
+#include "KismetAnimationLibrary.h"
+#include "ARPGProject/Character/ARPG_Character.h"
 #include "GameFramework/Character.h"
 
 void UARPG_AnimInstance::NativeInitializeAnimation()
@@ -28,7 +30,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	ShouldMove = /*CharacterMovement->GetCurrentAcceleration() != FVector::Zero() &&*/ GroundSpeed > 3.f;
 	IsFalling = CharacterMovement->IsFalling();
 
-	//Angle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
+	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
 
 
 	if(bEquipWeapon)

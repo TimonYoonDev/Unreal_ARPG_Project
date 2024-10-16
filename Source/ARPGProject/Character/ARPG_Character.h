@@ -48,7 +48,10 @@ public:
 	void HeavyAttackHold();
 	void HeavyAttackCompleted();
 	void WeaponChange();
+	void InputRoll(const FInputActionValue& Value);
 	void SetWeapon(int NextWeaponIndex);
+
+	bool IsRolling() const;
 
 
 	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) override;
@@ -70,6 +73,7 @@ private:
 	TArray<FARPG_CombatData> CombatDatas;
 	int CurrentWeaponIndex;
 	bool bEquipping;
+	bool bRolling;
 
 
 	virtual void WeaponEquip_Implementation(bool InEquipping) override;

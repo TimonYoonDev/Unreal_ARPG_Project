@@ -38,6 +38,9 @@ public:
 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> RollMontage;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bChargedAttack;
 
 };

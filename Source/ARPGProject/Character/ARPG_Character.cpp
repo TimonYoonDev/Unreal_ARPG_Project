@@ -252,6 +252,18 @@ void AARPG_Character::WeaponChange()
 	
 }
 
+void AARPG_Character::InputRoll(const FInputActionValue& Value)
+{
+	bRolling = Value.Get<bool>();
+	UKismetSystemLibrary::PrintString(GetWorld(),  FString::Printf(TEXT("Input Roll : %ls"), bRolling ? TEXT("true") : TEXT("false")));
+	if(bRolling)
+	{
+		SetActorRotation(DirectionRotator);
+		PlayAnimMontage(CombatDatas[CurrentWeaponIndex].RollMontage);
+		LaunchCharacter(GetActorForwardVector() * 1000.f, false, false);
+	}
+}
+
 void AARPG_Character::SetWeapon(int NextWeaponIndex)
 {
 	
@@ -284,6 +296,11 @@ void AARPG_Character::SetWeapon(int NextWeaponIndex)
 	CurrentWeapon = EquipWeapons[CurrentWeaponIndex];
 
 	bEquipping = true;
+}
+
+bool AARPG_Character::IsRolling() const
+{
+	return bRolling;
 }
 
 AARPG_WeaponBase* AARPG_Character::CreateWeapon(TSubclassOf<AARPG_WeaponBase> InWeaponBase)
