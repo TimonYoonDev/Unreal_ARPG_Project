@@ -79,15 +79,15 @@ void AARPG_Character::PostInitializeComponents()
 		if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData(RowName, WeaponData))
 		{
 			// 성공적으로 무기 데이터를 얻은 경우
-			EquipWeapons.Add(CreateWeapon(WeaponData.WeaponClass));
+			EquipWeaponArray.Add(CreateWeapon(WeaponData.WeaponClass));
 			if (FARPG_CombatData CombatData; GameInstance->TryGetCombatData(WeaponData.CombatDataRowName, CombatData))
 			{
-				CombatDatas.Add(CombatData);
+				CombatDataArray.Add(CombatData);
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
-				CombatDatas.Add(FARPG_CombatData());
+				CombatDataArray.Add(FARPG_CombatData());
 			}
 
 		}
@@ -101,15 +101,15 @@ void AARPG_Character::PostInitializeComponents()
 		if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData(RowName2, WeaponData))
 		{
 			// 성공적으로 무기 데이터를 얻은 경우
-			EquipWeapons.Add(CreateWeapon(WeaponData.WeaponClass));
+			EquipWeaponArray.Add(CreateWeapon(WeaponData.WeaponClass));
 			if (FARPG_CombatData CombatData; GameInstance->TryGetCombatData(WeaponData.CombatDataRowName, CombatData))
 			{
-				CombatDatas.Add(CombatData);
+				CombatDataArray.Add(CombatData);
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
-				CombatDatas.Add(FARPG_CombatData());
+				CombatDataArray.Add(FARPG_CombatData());
 			}
 		}
 		else
@@ -126,6 +126,11 @@ void AARPG_Character::PostInitializeComponents()
 float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
                                   AActor* DamageCauser)
 {
+	if(bDefending)
+	{
+
+		return 0;
+	}
 	const float ResultDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	// 먼저 DamageEvent가 FPointDamageEvent인지 확인
@@ -226,7 +231,7 @@ void AARPG_Character::HeavyAttackHold()
 	}
 	//UKismetSystemLibrary::PrintString(GetWorld(), "HeavyAttackHold");
 	SetActorRotation(DirectionRotator);
-	MeleeCombatComponent->HeavyAttack(CombatDatas[CurrentWeaponIndex].HeavyAttackMontage);
+	MeleeCombatComponent->HeavyAttack(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
 	
 }
 
@@ -236,31 +241,36 @@ void AARPG_Character::HeavyAttackCompleted()
 	{
 		return;
 	}
-	if(CombatDatas[CurrentWeaponIndex].bChargedAttack)
+	if(CombatDataArray[CurrentWeaponIndex].bChargedAttack)
 	{
-		MeleeCombatComponent->HeavyAttackComplete(CombatDatas[CurrentWeaponIndex].HeavyAttackMontage);
+		MeleeCombatComponent->HeavyAttackComplete(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
 	}
 	
 	//UKismetSystemLibrary::PrintString(GetWorld(), "HeavyAttackCompleted");
 }
 
-void AARPG_Character::WeaponChange()
+void AARPG_Character::InputWeaponChange(const FInputActionValue& Value)
 {
-	
-	int NextWeaponIndex = CurrentWeaponIndex + 1;
-	SetWeapon(NextWeaponIndex);
-	
+	SetWeapon(CurrentWeaponIndex + 1);
 }
 
 void AARPG_Character::InputRoll(const FInputActionValue& Value)
 {
 	bRolling = Value.Get<bool>();
-	UKismetSystemLibrary::PrintString(GetWorld(),  FString::Printf(TEXT("Input Roll : %ls"), bRolling ? TEXT("true") : TEXT("false")));
 	if(bRolling)
 	{
 		SetActorRotation(DirectionRotator);
-		PlayAnimMontage(CombatDatas[CurrentWeaponIndex].RollMontage);
+		PlayAnimMontage(CombatDataArray[CurrentWeaponIndex].RollMontage);
 		LaunchCharacter(GetActorForwardVector() * 1000.f, false, false);
+	}
+}
+
+void AARPG_Character::InputDefense(const FInputActionValue& Value)
+{
+	bDefending = Value.Get<bool>();
+	if(bDefending)
+	{
+		UKismetSystemLibrary::PrintString(GetWorld(), "Input Defense !!");
 	}
 }
 
@@ -275,15 +285,15 @@ void AARPG_Character::SetWeapon(int NextWeaponIndex)
 	{
 		return;
 	}
-	if(CombatDatas.Num() == 0)
+	if(CombatDataArray.Num() == 0)
 	{
 		return;
 	}
 
 	AnimInstance->EquipWeaponTrigger();
-	NextWeaponIndex = NextWeaponIndex < EquipWeapons.Num() ? NextWeaponIndex : 0;
+	NextWeaponIndex = NextWeaponIndex < EquipWeaponArray.Num() ? NextWeaponIndex : 0;
 	CurrentWeaponIndex = NextWeaponIndex;
-	FARPG_CombatData CombatData = CombatDatas[CurrentWeaponIndex];
+	FARPG_CombatData CombatData = CombatDataArray[CurrentWeaponIndex];
 	const int CombatPoseIndex = CombatData.CombatPoseIndex;
 	MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
 
@@ -293,7 +303,7 @@ void AARPG_Character::SetWeapon(int NextWeaponIndex)
 	{
 		CurrentWeapon->SetActorHiddenInGame(true);
 	}	
-	CurrentWeapon = EquipWeapons[CurrentWeaponIndex];
+	CurrentWeapon = EquipWeaponArray[CurrentWeaponIndex];
 
 	bEquipping = true;
 }
@@ -301,6 +311,11 @@ void AARPG_Character::SetWeapon(int NextWeaponIndex)
 bool AARPG_Character::IsRolling() const
 {
 	return bRolling;
+}
+
+bool AARPG_Character::IsDefending() const
+{
+	return  bDefending;
 }
 
 AARPG_WeaponBase* AARPG_Character::CreateWeapon(TSubclassOf<AARPG_WeaponBase> InWeaponBase)

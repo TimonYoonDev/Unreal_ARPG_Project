@@ -6,6 +6,8 @@
 
 #include "ARPG_AnimInstance.generated.h"
 
+class AARPG_Character;
+
 UCLASS()
 class ARPGPROJECT_API UARPG_AnimInstance : public UAnimInstance
 {
@@ -19,9 +21,10 @@ public:
 	void SetEquipWeaponIndex(int InWeaponIndex);
 	void HitTrigger(float InHitAngle);
 
+
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
-	ACharacter* Character;
+	AARPG_Character* Character;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	UCharacterMovementComponent* CharacterMovement;
@@ -51,4 +54,7 @@ private:
 	float HitTime;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Hit, meta = (AllowPrivateAccess = true))
 	float HitAngle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	bool IsDefending;
 };

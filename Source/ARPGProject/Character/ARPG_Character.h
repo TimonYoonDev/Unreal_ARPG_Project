@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "ARPG_Character.generated.h"
 
+class UARPG_AnimInstance;
 class AARPG_WeaponBase;
 class UMeleeCombatComponent;
 class USpringArmComponent;
@@ -47,33 +48,36 @@ public:
 	void InputAttack();
 	void HeavyAttackHold();
 	void HeavyAttackCompleted();
-	void WeaponChange();
+	void InputWeaponChange(const FInputActionValue& Value);
 	void InputRoll(const FInputActionValue& Value);
+	void InputDefense(const FInputActionValue& Value);
 	void SetWeapon(int NextWeaponIndex);
 
 	bool IsRolling() const;
+	bool IsDefending() const;
 
 
 	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) override;
 	virtual void AttackCheckBegin_Implementation() override;
 	virtual void AttackCheckEnd_Implementation() override;
 	virtual void WeaponAttach_Implementation(const FName AttachSocketName) override;
-	//virtual void WeaponEquip_Implementation(const bool bEquipping) override;
 
-	// To add mapping context
+
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 private:
 
-	UARPG_AnimInstance* AnimInstance;
+	TObjectPtr<UARPG_AnimInstance> AnimInstance;
 	AARPG_WeaponBase* CreateWeapon(TSubclassOf<AARPG_WeaponBase> WeaponBase);
-	TArray<AARPG_WeaponBase*> EquipWeapons;
-	TArray<FARPG_CombatData> CombatDatas;
+	TArray<TObjectPtr<AARPG_WeaponBase>> EquipWeaponArray;
+	TArray<FARPG_CombatData> CombatDataArray;
 	int CurrentWeaponIndex;
+
 	bool bEquipping;
 	bool bRolling;
+	bool bDefending;
 
 
 	virtual void WeaponEquip_Implementation(bool InEquipping) override;

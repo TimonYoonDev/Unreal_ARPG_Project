@@ -8,9 +8,7 @@
 
 class UInputMappingContext;
 class UInputAction;
-/**
- * 
- */
+
 UCLASS()
 class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 {
@@ -39,6 +37,8 @@ class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 	UInputAction* WeaponChangeAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* RollAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DefenseAction;
 protected:
 
 	virtual void OnPossess(APawn* InPawn) override;

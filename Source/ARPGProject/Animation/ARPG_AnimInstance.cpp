@@ -10,7 +10,7 @@
 void UARPG_AnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	Character = Cast<ACharacter>(GetOwningActor());
+	Character = Cast<AARPG_Character>(GetOwningActor());
 	if (Character == nullptr)
 		return;
 
@@ -31,7 +31,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	IsFalling = CharacterMovement->IsFalling();
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
-
+	IsDefending = Character->IsDefending();
 
 	if(bEquipWeapon)
 	{
