@@ -78,7 +78,7 @@ void AARPG_WeaponBase::AttackTrace()
 			FString OutText = FString::Printf(TEXT("Hit Target : %s"), *HitActorName);
 			UKismetSystemLibrary::PrintString(this, OutText);
 
-			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
+			OutHit.GetActor()->TakeDamage(50, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Target %s"), *StatID.ToString());
 		bHitCheck = true;

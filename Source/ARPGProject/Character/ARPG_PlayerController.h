@@ -14,6 +14,8 @@ class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+	AARPG_PlayerController();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 

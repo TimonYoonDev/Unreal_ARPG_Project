@@ -25,10 +25,26 @@ AARPG_AIController::AARPG_AIController()
 	
 }
 
+void AARPG_AIController::RunAI()
+{
+	if(BehaviorTree)
+	{
+		RunBehaviorTree(BehaviorTree);
+	}
+}
+
+void AARPG_AIController::StopAI() const
+{
+	if (UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent))
+	{
+		BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
+	}
+}
+
 void AARPG_AIController::OnPossess(APawn* InPawn)
 {
+	
 	Super::OnPossess(InPawn);
-	RunBehaviorTree(BehaviorTree);	
 }
 
 void AARPG_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)

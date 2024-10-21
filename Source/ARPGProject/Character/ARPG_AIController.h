@@ -15,6 +15,9 @@ class ARPGPROJECT_API AARPG_AIController : public AAIController
 public:
 	AARPG_AIController();
 
+	void RunAI();
+	void StopAI() const;
+
 	virtual void OnPossess(APawn* InPawn) override;
 
 	static const FName PatrolLocationKey;

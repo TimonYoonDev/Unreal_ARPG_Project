@@ -1,5 +1,7 @@
 
 #include "ARPG_Character.h"
+
+#include "ARPG_StatComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -8,7 +10,9 @@
 #include "GameFramework/Controller.h"
 #include "InputActionValue.h"
 #include "MeleeCombatComponent.h"
+#include "ARPGProject/ARPG_AttributeComponent.h"
 #include "ARPGProject/ARPG_GameInstance.h"
+#include "ARPGProject/ARPG_PlayerState.h"
 #include "ARPGProject/Animation/ARPG_AnimInstance.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -17,6 +21,8 @@
 
 AARPG_Character::AARPG_Character()
 {
+	
+
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	bUseControllerRotationPitch = false;
@@ -51,6 +57,8 @@ AARPG_Character::AARPG_Character()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	MeleeCombatComponent = CreateDefaultSubobject<UMeleeCombatComponent>(TEXT("MeleeCombatComp"));
+	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
+	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
 
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> HitParticle(TEXT("/Script/Engine.ParticleSystem'/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone'"));
 	if (HitParticle.Succeeded())
@@ -64,8 +72,20 @@ AARPG_Character::AARPG_Character()
 void AARPG_Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
+	if (IsPlayerControlled() == false)
+	{
+		AIController = Cast<AARPG_AIController>(GetController());
+		if (AIController)
+		{
+			AIController->RunAI();
+		}
+	}
+	PlayerState = GetController()->GetPlayerState<AARPG_PlayerState>();
+	if (PlayerState)
+	{
+		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_Character::BeginPlay "));
+	}
+	//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("ff %f"), PlayerState->GetCurrentHeath()));
 }
 
 void AARPG_Character::PostInitializeComponents()
@@ -161,7 +181,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(EventInstigator->GetPawn()->GetActorRotation());
 	const FVector LaunchVelocity = ForwardVector * 350.f;
 	LaunchCharacter(LaunchVelocity, false, false);
-
+	AttributeComponent->TakeDamage(ResultDamage);
 	return ResultDamage;
 }
 
@@ -372,6 +392,23 @@ void AARPG_Character::WeaponAttach_Implementation(const FName AttachSocketName)
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	CurrentWeapon->AttachToComponent(GetMesh(), AttachmentRules, AttachSocketName);
 	CurrentWeapon->SetActorHiddenInGame(false);
+}
+
+void AARPG_Character::OnDeath()
+{
+	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Death"));
+	if(IsPlayerControlled() == false)
+	{
+		
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetMesh()->SetAllBodiesSimulatePhysics(true);
+		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));// SetActorEnableCollision(false);
+		if(WidgetComponent)
+		{
+			WidgetComponent->SetHiddenInGame(true);
+		}
+		AIController->StopAI();
+	}
 }
 
 void AARPG_Character::WeaponEquip_Implementation(const bool InEquipping)

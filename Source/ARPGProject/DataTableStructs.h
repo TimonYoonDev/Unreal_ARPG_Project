@@ -8,7 +8,7 @@ USTRUCT(BlueprintType)
 struct FARPG_WeaponData : public FTableRowBase
 {
 	GENERATED_BODY()
-public:
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FText WeaponName;
 
@@ -27,7 +27,7 @@ struct FARPG_CombatData: public FTableRowBase
 {
 	GENERATED_BODY()
 	FARPG_CombatData();
-public:
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 CombatPoseIndex;
 
@@ -53,5 +53,10 @@ USTRUCT(BlueprintType)
 struct FARPG_CharacterData: public FTableRowBase
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 MaxHeath;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	int32 Damage;
+
 };

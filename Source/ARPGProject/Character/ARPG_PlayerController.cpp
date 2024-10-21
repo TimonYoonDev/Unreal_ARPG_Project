@@ -6,10 +6,33 @@
 #include "ARPG_Character.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/KismetSystemLibrary.h"
+
+AARPG_PlayerController::AARPG_PlayerController()
+{
+	//UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_PlayerController "));
+}
 
 void AARPG_PlayerController::OnPossess(APawn* InPawn)
 {
+
+	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_PlayerController::OnPossess "));
 	Super::OnPossess(InPawn);
+
+	UUserWidget* Widget = Cast<UUserWidget>(StaticLoadObject(UUserWidget::StaticClass(), nullptr, TEXT("/Game/ARPG/Blueprints/UI/WB_Main.WB_Main_C")));
+
+	
+	{
+		//UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), Widget);
+		if (Widget)
+		{
+			Widget->AddToViewport(); // 위젯을 화면에 추가
+		}
+
+	}
+	
+
 
 	AARPG_Character* ARPG_Character = Cast<AARPG_Character>(InPawn);
 

@@ -15,8 +15,10 @@ class ARPGPROJECT_API UARPG_GameInstance : public UGameInstance
 private:
 	TObjectPtr<UDataTable> WeaponDataTable;
 	TObjectPtr<UDataTable> CombatDataTable;
+	TObjectPtr<UDataTable> CharacterDataTable;
 
 public:
 	bool TryGetWeaponData(const FString& RowName, FARPG_WeaponData& OutWeaponData) const;
 	bool TryGetCombatData(const FString& RowName, FARPG_CombatData& OutCombatData) const;
+	bool TryGetCharacterData(const FString& RowName, FARPG_CharacterData& OutData) const;
 };
