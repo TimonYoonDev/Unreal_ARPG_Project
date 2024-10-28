@@ -1,12 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "ARPG_AICharacterInterface.generated.h"
 
-// This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UARPG_AICharacterInterface : public UInterface
 {
@@ -17,11 +14,8 @@ class ARPGPROJECT_API IARPG_AICharacterInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	void SetWalkSpeed(const float InSpeed);
 	virtual void SetWalkSpeed_Implementation(const float InSpeed) = 0;
-
-
 };

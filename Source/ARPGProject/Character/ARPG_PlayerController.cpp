@@ -49,11 +49,12 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, ARPG_Character, &AARPG_Character::StopJumping);
 
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::InputAttack);
-		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::HeavyAttackHold);
+		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::HeavyAttackStart);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Completed, ARPG_Character, &AARPG_Character::HeavyAttackCompleted);
 		EnhancedInputComponent->BindAction(WeaponChangeAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputWeaponChange);
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputRoll);
 		EnhancedInputComponent->BindAction(DefenseAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputDefense);
+		EnhancedInputComponent->BindAction(TargetLockOnAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputTargetLockOn);
 		
 	}
 }

@@ -75,8 +75,8 @@ void AARPG_WeaponBase::AttackTrace()
 			DamageEventBase.HitInfo = OutHit;
 			FString HitActorName = OutHit.GetActor()->GetName();
 
-			FString OutText = FString::Printf(TEXT("Hit Target : %s"), *HitActorName);
-			UKismetSystemLibrary::PrintString(this, OutText);
+			//FString OutText = FString::Printf(TEXT("Hit Target : %s"), *HitActorName);
+			//UKismetSystemLibrary::PrintString(this, OutText);
 
 			OutHit.GetActor()->TakeDamage(50, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}

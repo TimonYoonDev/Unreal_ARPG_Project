@@ -3,3 +3,11 @@
 
 #include "ARPG_PlayerCharacter.h"
 
+AARPG_PlayerCharacter::AARPG_PlayerCharacter()
+{
+}
+
+void AARPG_PlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}

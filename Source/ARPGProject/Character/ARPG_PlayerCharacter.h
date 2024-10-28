@@ -13,5 +13,8 @@ UCLASS()
 class ARPGPROJECT_API AARPG_PlayerCharacter : public AARPG_Character
 {
 	GENERATED_BODY()
-	
+	AARPG_PlayerCharacter();
+
+public:
+	virtual void BeginPlay() override;
 };

@@ -4,7 +4,7 @@
 #include "ARPG_BTT_Attack.h"
 
 #include "ARPGProject/Character/ARPG_Character.h"
-#include "ARPGProject/Character/MeleeCombatComponent.h"
+#include "ARPGProject/Character/Component/MeleeCombatComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 UARPG_BTT_Attack::UARPG_BTT_Attack()
@@ -15,7 +15,7 @@ UARPG_BTT_Attack::UARPG_BTT_Attack()
 EBTNodeResult::Type UARPG_BTT_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
-
+	UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), TEXT("UARPG_BTT_Attack"), *OwnerActor->GetActorNameOrLabel());
 	Result = EBTNodeResult::InProgress;
 	if (AARPG_Character* Character = Cast<AARPG_Character>(OwnerActor); Character != nullptr)
 	{

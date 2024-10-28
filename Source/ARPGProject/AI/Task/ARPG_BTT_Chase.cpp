@@ -9,7 +9,7 @@
 EBTNodeResult::Type UARPG_BTT_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
-
+	UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), TEXT("ARPG_BTT_Chase"), *OwnerActor->GetActorNameOrLabel());
 	if(AICharacterInterface)
 	{
 		AICharacterInterface->Execute_SetWalkSpeed(AICharacterInterface.GetObject(), Speed);

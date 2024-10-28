@@ -32,7 +32,11 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
 	IsDefending = Character->IsDefending();
-
+	if(Character->GetLockOnSystemComponent())
+	{
+		IsLockOnTarget = Character->GetLockOnSystemComponent()->IsLockOnTarget();
+	}
+	
 	if(bEquipWeapon)
 	{
 		EquipTime -= DeltaSeconds;

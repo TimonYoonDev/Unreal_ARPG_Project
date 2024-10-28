@@ -23,19 +23,19 @@ protected:
 
 public:
     // 체력, 스태미나, 경험치 관련 속성
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MaxHealth;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Health;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MaxStamina;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Stamina;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 Experience;
 
     // 체력과 스태미나 관련 델리게이트
@@ -69,4 +69,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Attributes")
     float GetStaminaPercent() const;
+
+    bool IsDeath() const;
 };

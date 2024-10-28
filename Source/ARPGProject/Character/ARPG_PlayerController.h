@@ -41,6 +41,8 @@ class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 	UInputAction* RollAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* DefenseAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* TargetLockOnAction;
 protected:
 
 	virtual void OnPossess(APawn* InPawn) override;

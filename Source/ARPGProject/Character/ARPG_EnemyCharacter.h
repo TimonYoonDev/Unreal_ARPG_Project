@@ -13,23 +13,35 @@ class ARPGPROJECT_API AARPG_EnemyCharacter : public AARPG_Character, public IARP
 {
 	GENERATED_BODY()
 	AARPG_EnemyCharacter();
-	virtual void SetWalkSpeed_Implementation(const float InSpeed) override;
+
+	static const FName LockOnPivotKey;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UHealthBarWidget> HealthBarWidgetClass;
 
 	UPROPERTY()
-	UHealthBarWidget* HealthBarWidget;
+	TObjectPtr<UHealthBarWidget> HealthBarWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> LockOnWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> LockOnWidget;
 
 	virtual void BeginPlay() override;
+	virtual void SetLockOnWidget(const bool bShowWidget);
+	virtual void SetWalkSpeed_Implementation(const float InSpeed) override;
+
 protected:
-	
-	
-	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-	// 체력 게이지 업데이트
 	virtual void UpdateHealthBar();
 	virtual void OnDeath() override;
+
+private:
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = true))
+	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
+
 	
+
 };

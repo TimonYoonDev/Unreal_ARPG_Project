@@ -9,7 +9,7 @@
 EBTNodeResult::Type UARPG_BTT_Base::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = EBTNodeResult::Failed;
-	if (AICharacterInterface == nullptr)
+	//if (AICharacterInterface == nullptr)
 	{
 		const AAIController* AIController = OwnerComp.GetAIOwner();
 
@@ -23,6 +23,8 @@ EBTNodeResult::Type UARPG_BTT_Base::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 		{
 			return Result;
 		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), *AIController->GetActorNameOrLabel(), *OwnerActor->GetActorNameOrLabel());
 
 		if (OwnerActor->Implements<UARPG_AICharacterInterface>())
 		{

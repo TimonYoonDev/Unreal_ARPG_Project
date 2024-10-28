@@ -28,7 +28,7 @@ void UARPG_AttributeComponent::TakeDamage(float DamageAmount)
     // 체력 변화 델리게이트 브로드캐스트
     OnHealthChanged.Broadcast();
 
-    if (Health < KINDA_SMALL_NUMBER)
+    if (IsDeath())
     {
         Health = 0.f;
         OnDeath.Broadcast();
@@ -63,4 +63,9 @@ float UARPG_AttributeComponent::GetHealthPercent() const
 float UARPG_AttributeComponent::GetStaminaPercent() const
 {
     return MaxStamina > 0 ? Stamina / MaxStamina : 0.0f;
+}
+
+bool UARPG_AttributeComponent::IsDeath() const
+{
+    return Health < KINDA_SMALL_NUMBER;
 }

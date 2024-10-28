@@ -1,19 +1,15 @@
 
 #include "ARPG_Character.h"
 
-#include "ARPG_StatComponent.h"
-#include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "InputActionValue.h"
-#include "MeleeCombatComponent.h"
-#include "ARPGProject/ARPG_AttributeComponent.h"
 #include "ARPGProject/ARPG_GameInstance.h"
-#include "ARPGProject/ARPG_PlayerState.h"
-#include "ARPGProject/Animation/ARPG_AnimInstance.h"
+#include "Component/ARPG_LockOnSystemComponent.h"
+
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -21,8 +17,6 @@
 
 AARPG_Character::AARPG_Character()
 {
-	
-
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	bUseControllerRotationPitch = false;
@@ -60,11 +54,15 @@ AARPG_Character::AARPG_Character()
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
 
+	LockOnSystemComponent = CreateDefaultSubobject<UARPG_LockOnSystemComponent>(TEXT("LockOnSystemComponent"));
+	
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> HitParticle(TEXT("/Script/Engine.ParticleSystem'/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone'"));
 	if (HitParticle.Succeeded())
 	{
 		HitParticleSystem = HitParticle.Object;
 	}
+
+	PrimaryActorTick.bCanEverTick = true;
 
 }
 
@@ -167,7 +165,6 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 			PointDamageEvent.HitInfo.Location,  // 이펙트를 생성할 위치 (FVector)
 			Rotator,        // 회전값 (FRotator)
 			FVector(0.4f),
-			
 			true                          // 자동 파괴 여부 (기본값 true)
 		);
 		
@@ -183,6 +180,20 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	LaunchCharacter(LaunchVelocity, false, false);
 	AttributeComponent->TakeDamage(ResultDamage);
 	return ResultDamage;
+}
+
+void AARPG_Character::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	/*if(TargetActor)
+	{
+		const FRotator CurrentRot = GetControlRotation();
+		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetActor->GetActorLocation());
+		const FRotator ResultRot = UKismetMathLibrary::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, 20.f);
+
+		GetController()->SetControlRotation(ResultRot);
+	}*/
 }
 
 void AARPG_Character::Move(const FInputActionValue& Value)
@@ -227,7 +238,6 @@ void AARPG_Character::Look(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
@@ -243,16 +253,14 @@ void AARPG_Character::InputAttack()
 	MeleeCombatComponent->InputAttack();
 }
 
-void AARPG_Character::HeavyAttackHold()
+void AARPG_Character::HeavyAttackStart()
 {
 	if (bEquipping)
 	{
 		return;
 	}
-	//UKismetSystemLibrary::PrintString(GetWorld(), "HeavyAttackHold");
 	SetActorRotation(DirectionRotator);
 	MeleeCombatComponent->HeavyAttack(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
-	
 }
 
 void AARPG_Character::HeavyAttackCompleted()
@@ -265,8 +273,6 @@ void AARPG_Character::HeavyAttackCompleted()
 	{
 		MeleeCombatComponent->HeavyAttackComplete(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
 	}
-	
-	//UKismetSystemLibrary::PrintString(GetWorld(), "HeavyAttackCompleted");
 }
 
 void AARPG_Character::InputWeaponChange(const FInputActionValue& Value)
@@ -292,6 +298,17 @@ void AARPG_Character::InputDefense(const FInputActionValue& Value)
 	{
 		UKismetSystemLibrary::PrintString(GetWorld(), "Input Defense !!");
 	}
+}
+
+void AARPG_Character::InputTargetLockOn(const FInputActionValue& Value)
+{
+	UKismetSystemLibrary::PrintString(GetWorld(), "Lcok On!!");
+	if(LockOnSystemComponent == nullptr)
+	{
+		UKismetSystemLibrary::PrintString(GetWorld(), *GetActorNameOrLabel());
+		return;
+	}
+	LockOnSystemComponent->InputTargetLockOn();
 }
 
 void AARPG_Character::SetWeapon(int NextWeaponIndex)
@@ -354,8 +371,6 @@ AARPG_WeaponBase* AARPG_Character::CreateWeapon(TSubclassOf<AARPG_WeaponBase> In
 			if (AARPG_WeaponBase* SpawnedActor = World->SpawnActor<AARPG_WeaponBase>(InWeaponBase, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams))
 			{
 				SpawnedActor->SetActorHiddenInGame(true);
-				//FName SocketName("weapon_r_unequip_socket");
-				//WeaponAttach_Implementation(SocketName);
 				return SpawnedActor;
 			}
 			
@@ -402,10 +417,10 @@ void AARPG_Character::OnDeath()
 		
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesSimulatePhysics(true);
-		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));// SetActorEnableCollision(false);
-		if(WidgetComponent)
+		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));
+		if(HealthWidgetComponent)
 		{
-			WidgetComponent->SetHiddenInGame(true);
+			HealthWidgetComponent->SetHiddenInGame(true);
 		}
 		AIController->StopAI();
 	}
