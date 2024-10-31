@@ -50,7 +50,7 @@ AARPG_Character::AARPG_Character()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	MeleeCombatComponent = CreateDefaultSubobject<UMeleeCombatComponent>(TEXT("MeleeCombatComp"));
+	MeleeCombatComponent = CreateDefaultSubobject<UARPG_MeleeCombatComponent>(TEXT("MeleeCombatComp"));
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
 
@@ -249,7 +249,10 @@ void AARPG_Character::InputAttack()
 	{
 		return;
 	}
-	SetActorRotation(DirectionRotator);
+	if (LockOnSystemComponent->IsLockOnTarget() == false)
+	{
+		SetActorRotation(DirectionRotator);
+	}
 	MeleeCombatComponent->InputAttack();
 }
 
@@ -259,7 +262,10 @@ void AARPG_Character::HeavyAttackStart()
 	{
 		return;
 	}
-	SetActorRotation(DirectionRotator);
+	if (LockOnSystemComponent->IsLockOnTarget() == false)
+	{
+		SetActorRotation(DirectionRotator);
+	}
 	MeleeCombatComponent->HeavyAttack(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
 }
 

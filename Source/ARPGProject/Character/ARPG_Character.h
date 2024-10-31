@@ -11,7 +11,7 @@
 
 #include "Component/ARPG_AttributeComponent.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
-#include "Component/MeleeCombatComponent.h"
+#include "Component/ARPG_MeleeCombatComponent.h"
 #include "GameFramework/Character.h"
 #include "Components/WidgetComponent.h"
 
@@ -39,7 +39,7 @@ protected:
 	UCameraComponent* FollowCamera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
-	UMeleeCombatComponent* MeleeCombatComponent;
+	UARPG_MeleeCombatComponent* MeleeCombatComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_AttributeComponent* AttributeComponent;
@@ -114,7 +114,7 @@ private:
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE UMeleeCombatComponent* GetMeleeCombatComponent() const { return MeleeCombatComponent; }
+	FORCEINLINE UARPG_MeleeCombatComponent* GetMeleeCombatComponent() const { return MeleeCombatComponent; }
 	FORCEINLINE UARPG_AttributeComponent* GetAttributeComponent() const { return AttributeComponent; }
 	FORCEINLINE UARPG_LockOnSystemComponent* GetLockOnSystemComponent() const { return LockOnSystemComponent; }
 

@@ -4,7 +4,7 @@
 #include "ARPG_BTT_Attack.h"
 
 #include "ARPGProject/Character/ARPG_Character.h"
-#include "ARPGProject/Character/Component/MeleeCombatComponent.h"
+#include "ARPGProject/Character/Component/ARPG_MeleeCombatComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 UARPG_BTT_Attack::UARPG_BTT_Attack()
