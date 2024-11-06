@@ -8,7 +8,9 @@
 #include "GameFramework/Controller.h"
 #include "InputActionValue.h"
 #include "ARPGProject/ARPG_GameInstance.h"
+#include "ARPGProject/ARPG_GameMode.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
+#include "Components/SphereComponent.h"
 
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -51,6 +53,15 @@ AARPG_Character::AARPG_Character()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	MeleeCombatComponent = CreateDefaultSubobject<UARPG_MeleeCombatComponent>(TEXT("MeleeCombatComp"));
+	MeleeCombatComponent->OnAttackEndDelegate.AddLambda([this]() -> void
+	{
+		bIsKnockBack = false;
+		FinishAttackCollider->SetGenerateOverlapEvents(false);
+		if (bIsFinishAttack)
+		{
+			OnDeath();
+		}
+	});
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
 
@@ -61,22 +72,48 @@ AARPG_Character::AARPG_Character()
 	{
 		HitParticleSystem = HitParticle.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> ParryParticle(TEXT("/Script/Engine.ParticleSystem'/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Sparks/P_Sparks_E.P_Sparks_E'"));
+	if (ParryParticle.Succeeded())
+	{
+		ParryParticleSystem = ParryParticle.Object;
+	}
 
 	PrimaryActorTick.bCanEverTick = true;
 
+
+	// 전방에 위치할 FinishAttackCollider 초기화
+	FinishAttackCollider = CreateDefaultSubobject<USphereComponent>(TEXT("FinishAttackCollider"));
+	FinishAttackCollider->SetupAttachment(RootComponent);
+
+	// 콜라이더 크기와 위치 설정
+	FinishAttackCollider->SetSphereRadius(100.0f);  // 필요에 따라 범위를 조정
+	FinishAttackCollider->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+	FinishAttackCollider->SetGenerateOverlapEvents(false);
+	FinishAttackCollider->SetHiddenInGame(false);
+
+	// 오버랩 이벤트 바인딩
+	FinishAttackCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapBegin);
+	FinishAttackCollider->OnComponentEndOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapEnd);
 }
 
 
 void AARPG_Character::BeginPlay()
 {
 	Super::BeginPlay();
+	GameInstance = Cast<UARPG_GameInstance>(GetGameInstance());
 	if (IsPlayerControlled() == false)
 	{
+		SetCharacterKey(FName("Quinn"));
+
 		AIController = Cast<AARPG_AIController>(GetController());
 		if (AIController)
 		{
 			AIController->RunAI();
 		}
+	}
+	else
+	{
+		SetCharacterKey(FName("Barbarian"));
 	}
 	PlayerState = GetController()->GetPlayerState<AARPG_PlayerState>();
 	if (PlayerState)
@@ -84,13 +121,9 @@ void AARPG_Character::BeginPlay()
 		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_Character::BeginPlay "));
 	}
 	//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("ff %f"), PlayerState->GetCurrentHeath()));
-}
 
-void AARPG_Character::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
 
-	if (const UARPG_GameInstance* GameInstance = Cast<UARPG_GameInstance>(GetGameInstance()))
+	if (GameInstance)
 	{
 		const FString RowName("1");
 		// TryGetWeaponData 호출
@@ -136,45 +169,63 @@ void AARPG_Character::PostInitializeComponents()
 			UE_LOG(LogTemp, Warning, TEXT("Weapon data for row %s not found"), *RowName);
 		}
 	}
+	SetWeapon(0);
+}
+
+void AARPG_Character::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();	
 
 	AnimInstance = Cast<UARPG_AnimInstance>(GetMesh()->GetAnimInstance());
-	SetWeapon(0);
+	
 }
 
 float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
                                   AActor* DamageCauser)
 {
-	if(bDefending)
-	{
-
-		return 0;
-	}
 	const float ResultDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	// 먼저 DamageEvent가 FPointDamageEvent인지 확인
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		const FPointDamageEvent& PointDamageEvent = static_cast<const FPointDamageEvent&>(DamageEvent);
 
-		FRotator Rotator = UKismetMathLibrary::MakeRotFromXY(PointDamageEvent.HitInfo.Normal, PointDamageEvent.HitInfo.Normal);
-				
-		// 파티클 이펙트 생성
+		if (MeleeCombatComponent)
+		{
+			if (MeleeCombatComponent->IsParry())
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(
+					GetWorld(), ParryParticleSystem, PointDamageEvent.HitInfo.Location,
+					FRotator::ZeroRotator, FVector(1.0f), true);
+
+				if (EventInstigator->GetPawn()->Implements<UARPG_CharacterInterface>())
+				{
+					Execute_HitKnockBack(EventInstigator->GetPawn(), HitReactionMontageData);
+					AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode());
+					if (GameMode)
+					{
+						GameMode->StartSlowMotion(0.2f, 0.5f);
+					}
+				}
+				return 0;
+			}
+
+			if (MeleeCombatComponent->IsDefense())
+			{
+				MeleeCombatComponent->PlayMontage(MontageData.DefenseReactionMontage);
+				return 0;
+			}
+		}
+
+		const FRotator Rotator = UKismetMathLibrary::MakeRotFromXY(PointDamageEvent.HitInfo.Normal, PointDamageEvent.HitInfo.Normal);
+
 		UGameplayStatics::SpawnEmitterAtLocation(
-			GetWorld(),                   // 월드
-			HitParticleSystem,            // 생성할 파티클 시스템
-			PointDamageEvent.HitInfo.Location,  // 이펙트를 생성할 위치 (FVector)
-			Rotator,        // 회전값 (FRotator)
-			FVector(0.4f),
-			true                          // 자동 파괴 여부 (기본값 true)
+			GetWorld(), HitParticleSystem, PointDamageEvent.HitInfo.Location,
+			Rotator, FVector(0.4f), true
 		);
-		
-		//const FRotator LookAtRotation = UKismetMathLibrary::FindRelativeLookAtRotation(DamageCauser->GetActorTransform(), GetActorLocation());
 		const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PointDamageEvent.HitInfo.Location, GetActorLocation());
 		AnimInstance->HitTrigger(LookAtRotation.Yaw);
-		
 	}
-	
-	//const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(DamageCauser->GetActorRotation());
+
 	const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(EventInstigator->GetPawn()->GetActorRotation());
 	const FVector LaunchVelocity = ForwardVector * 350.f;
 	LaunchCharacter(LaunchVelocity, false, false);
@@ -194,6 +245,24 @@ void AARPG_Character::Tick(float DeltaSeconds)
 
 		GetController()->SetControlRotation(ResultRot);
 	}*/
+}
+
+void AARPG_Character::SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget)
+{
+	bCanFinishAttack = InCanFinishAttack;
+	FinishAttackTargetActor = InFinishAttackTarget;
+}
+
+void AARPG_Character::SetCharacterKey(const FName InCharacterKey)
+{
+	CharacterKey = InCharacterKey;
+	if(MeleeCombatComponent)
+	{
+		if(GameInstance->TryGetMontageData(CharacterKey.ToString(), MontageData))
+		{
+			//MeleeCombatComponent->SetMontageData(MontageData);
+		}
+	}
 }
 
 void AARPG_Character::Move(const FInputActionValue& Value)
@@ -249,6 +318,26 @@ void AARPG_Character::InputAttack()
 	{
 		return;
 	}
+
+	if(bCanFinishAttack)
+	{
+		bCanFinishAttack = false;
+		if(FinishAttackTargetActor)
+		{
+			FVector DirectionToTarget = FinishAttackTargetActor->GetActorLocation() - GetActorLocation();
+			DirectionToTarget.Z = 0; // 캐릭터의 높이는 유지하며 평면 회전만 수행
+
+			FRotator TargetRotation = DirectionToTarget.Rotation();
+			SetActorRotation(TargetRotation);
+			MeleeCombatComponent->PlayMontage(MontageData.FinishAttackMontage);
+			if(FinishAttackTargetActor->Implements<UARPG_CharacterInterface>())
+			{
+				IARPG_CharacterInterface::Execute_FinishAttack(FinishAttackTargetActor);
+			}
+		}
+		return;
+	}
+
 	if (LockOnSystemComponent->IsLockOnTarget() == false)
 	{
 		SetActorRotation(DirectionRotator);
@@ -299,11 +388,16 @@ void AARPG_Character::InputRoll(const FInputActionValue& Value)
 
 void AARPG_Character::InputDefense(const FInputActionValue& Value)
 {
-	bDefending = Value.Get<bool>();
-	if(bDefending)
+	if(Value.Get<bool>())
 	{
+		MeleeCombatComponent->Defense();
 		UKismetSystemLibrary::PrintString(GetWorld(), "Input Defense !!");
 	}
+	else
+	{
+		MeleeCombatComponent->DefenseComplete();
+	}
+	//LaunchCharacter(GetActorForwardVector() * 1000.f, false, false);
 }
 
 void AARPG_Character::InputTargetLockOn(const FInputActionValue& Value)
@@ -358,7 +452,16 @@ bool AARPG_Character::IsRolling() const
 
 bool AARPG_Character::IsDefending() const
 {
-	return  bDefending;
+	if(MeleeCombatComponent)
+	{
+		return  MeleeCombatComponent->IsDefense();
+	}
+	return false;	
+}
+
+bool AARPG_Character::IsKnockBack() const
+{
+	return bIsKnockBack;
 }
 
 AARPG_WeaponBase* AARPG_Character::CreateWeapon(TSubclassOf<AARPG_WeaponBase> InWeaponBase)
@@ -415,9 +518,35 @@ void AARPG_Character::WeaponAttach_Implementation(const FName AttachSocketName)
 	CurrentWeapon->SetActorHiddenInGame(false);
 }
 
+void AARPG_Character::HitKnockBack_Implementation(const UAnimMontage* HitReactionMontage)
+{
+	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Hit Knock Back"));
+
+	bIsKnockBack = true;
+	FinishAttackCollider->SetGenerateOverlapEvents(true);
+	MeleeCombatComponent->PlayMontage(MontageData.ParryingReactionMontage);
+}
+
+void AARPG_Character::FinishAttack_Implementation()
+{
+	bIsFinishAttack = true;
+	MeleeCombatComponent->PlayMontage(MontageData.FinishAttackReactionMontage);
+}
+
+void AARPG_Character::FinishAttackDeath()
+{
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));
+	if (HealthWidgetComponent)
+	{
+		HealthWidgetComponent->SetHiddenInGame(true);
+	}
+	AIController->StopAI();
+}
+
 void AARPG_Character::OnDeath()
 {
 	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Death"));
+
 	if(IsPlayerControlled() == false)
 	{
 		
@@ -431,6 +560,36 @@ void AARPG_Character::OnDeath()
 		AIController->StopAI();
 	}
 }
+
+void AARPG_Character::OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if ( OtherActor && OtherActor != this)
+	{
+		AARPG_Character* Character = Cast<AARPG_Character>(OtherActor);
+		if(Character)
+		{
+			UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapBegin");
+
+			Character->SetCanFinishAttack(true, this);
+		}
+	}
+}
+
+void AARPG_Character::OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		AARPG_Character* Character = Cast<AARPG_Character>(OtherActor);
+		if (Character)
+		{
+			UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapEnd");
+			Character->SetCanFinishAttack(false, nullptr);
+		}
+	}
+}
+
 
 void AARPG_Character::WeaponEquip_Implementation(const bool InEquipping)
 {

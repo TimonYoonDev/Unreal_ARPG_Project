@@ -13,5 +13,9 @@ UCLASS()
 class ARPGPROJECT_API AARPG_GameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	void StartSlowMotion(float SlowDownFactor, float Duration);
+	void ResetTimeDilation();
 	
 };

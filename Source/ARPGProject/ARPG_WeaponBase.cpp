@@ -60,7 +60,9 @@ void AARPG_WeaponBase::AttackTrace()
 	QueryParams.AddIgnoredActor(GetOwner());
 	
 	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, ECollisionChannel::ECC_GameTraceChannel1, FCollisionShape::MakeSphere(12.f), QueryParams);
-	bool bHitCheck = false;
+
+	FName TargetTag = GetOwner()->ActorHasTag("Player") ? "Enemy" : "Player";
+
 	for (auto OutHit : OutHits)
 	{
 		auto StatID = OutHit.GetActor()->GetFNameForStatID();
@@ -69,19 +71,16 @@ void AARPG_WeaponBase::AttackTrace()
 			continue;
 		}
 		TargetSet.Add(StatID.ToString());
-		if (OutHit.GetActor()->Implements<UARPG_CharacterInterface>())
+
+		if(OutHit.GetActor()->ActorHasTag(TargetTag))
 		{
 			FPointDamageEvent DamageEventBase;
 			DamageEventBase.HitInfo = OutHit;
 			FString HitActorName = OutHit.GetActor()->GetName();
 
-			//FString OutText = FString::Printf(TEXT("Hit Target : %s"), *HitActorName);
-			//UKismetSystemLibrary::PrintString(this, OutText);
-
-			OutHit.GetActor()->TakeDamage(50, DamageEventBase, GetOwner()->GetInstigatorController(), this);
+			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Target %s"), *StatID.ToString());
-		bHitCheck = true;
 	}
 
 //#if ENABLE_DRAW_DEBUG

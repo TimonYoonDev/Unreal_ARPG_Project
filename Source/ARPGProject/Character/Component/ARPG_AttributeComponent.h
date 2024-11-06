@@ -5,9 +5,9 @@
 #include "ARPG_AttributeComponent.generated.h"
 
 // 체력, 스태미나, 경험치 변화에 대한 델리게이트 선언
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthChanged);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStaminaChanged);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnExperienceChanged);
+DECLARE_MULTICAST_DELEGATE(FOnHealthChanged);
+DECLARE_MULTICAST_DELEGATE(FOnStaminaChanged);
+DECLARE_MULTICAST_DELEGATE(FOnExperienceChanged);
 DECLARE_MULTICAST_DELEGATE(FOnDeath);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -39,13 +39,13 @@ public:
     int32 Experience;
 
     // 체력과 스태미나 관련 델리게이트
-    UPROPERTY(BlueprintAssignable, Category = "Events")
+    //(BlueprintAssignable, Category = "Events")
     FOnHealthChanged OnHealthChanged;
 
-    UPROPERTY(BlueprintAssignable, Category = "Events")
+    //UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnStaminaChanged OnStaminaChanged;
 
-    UPROPERTY(BlueprintAssignable, Category = "Events")
+    //UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnExperienceChanged OnExperienceChanged;
 
 	//UPROPERTY(BlueprintAssignable, Category = "Events")

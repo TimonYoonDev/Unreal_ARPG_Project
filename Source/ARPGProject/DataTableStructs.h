@@ -59,4 +59,33 @@ struct FARPG_CharacterData: public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 Damage;
 
+
+	//피격
+	//리액션 시트
+};
+
+USTRUCT()
+struct FARPG_MontageData: public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> ParryingReactionMontage;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> DefenseReactionMontage;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> FinishAttackMontage;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> FinishAttackReactionMontage;
+
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> AssassinateMontage;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TObjectPtr<UAnimMontage> AssassinateReactionMontage;
+
 };

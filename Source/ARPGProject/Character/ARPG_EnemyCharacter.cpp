@@ -73,6 +73,21 @@ float AARPG_EnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& D
 {
 	const float ResultDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	AARPG_EnemyCharacter::UpdateHealthBar();
+
+	if (ResultDamage > 0.0f && DamageCauser)
+	{
+		// 데미지 이벤트 보고
+		UAISense_Damage::ReportDamageEvent(
+			GetWorld(),
+			this,                       // 데미지 받은 AI 캐릭터
+			Cast<AActor>(EventInstigator->GetPawn()),               // 데미지를 입힌 Actor (플레이어 등)
+			ResultDamage,               // 데미지 양
+			GetActorLocation(),         // 데미지 받은 위치
+			DamageCauser->GetActorLocation() // 데미지 가한 Actor 위치
+		);
+
+		// 데미지에 대한 추가 처리(예: 체력 감소) 등을 여기서 수행할 수 있습니다.
+	}
 	return ResultDamage;
 }
 

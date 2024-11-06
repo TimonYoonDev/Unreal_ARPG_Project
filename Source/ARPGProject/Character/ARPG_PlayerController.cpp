@@ -11,7 +11,11 @@
 
 AARPG_PlayerController::AARPG_PlayerController()
 {
-	//UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_PlayerController "));
+	if(ConstructorHelpers::FClassFinder<UARPG_MainWidget>Widget (TEXT("/Game/ARPG/Blueprints/UI/WB_Main.WB_Main_C")); Widget.Succeeded())
+	{
+		HudWidgetClass = Widget.Class;
+	}
+	
 }
 
 void AARPG_PlayerController::OnPossess(APawn* InPawn)
@@ -20,21 +24,11 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_PlayerController::OnPossess "));
 	Super::OnPossess(InPawn);
 
-	UUserWidget* Widget = Cast<UUserWidget>(StaticLoadObject(UUserWidget::StaticClass(), nullptr, TEXT("/Game/ARPG/Blueprints/UI/WB_Main.WB_Main_C")));
-
-	
-	{
-		//UUserWidget* Widget = CreateWidget<UUserWidget>(GetWorld(), Widget);
-		if (Widget)
-		{
-			Widget->AddToViewport(); // 위젯을 화면에 추가
-		}
-
-	}
-	
-
-
 	AARPG_Character* ARPG_Character = Cast<AARPG_Character>(InPawn);
+	if(ARPG_Character == nullptr)
+	{
+		return;
+	}
 
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
@@ -55,6 +49,15 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputRoll);
 		EnhancedInputComponent->BindAction(DefenseAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputDefense);
 		EnhancedInputComponent->BindAction(TargetLockOnAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputTargetLockOn);
-		
+	}
+
+	if (HudWidgetClass)
+	{
+		MainWidget = CreateWidget<UARPG_MainWidget>(GetWorld(), HudWidgetClass);
+		if (MainWidget)
+		{
+			MainWidget->AddToViewport(); // 위젯을 화면에 추가
+			MainWidget->SetBind(ARPG_Character);
+		}
 	}
 }

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Perception/AISenseConfig_Damage.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "ARPG_AIController.generated.h"
 
 UCLASS()
@@ -23,17 +25,27 @@ public:
 	static const FName PatrolLocationKey;
 	static const FName TargetActorKey;
 	static const FName HasLineOfSightKey;
-	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Perception", meta = (AllowPrivateAccess = "true"))
+	UAIPerceptionComponent* AIPerceptionComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "Perception")
+	UAISenseConfig_Sight* SightConfig;
 private:
 
 	TObjectPtr<UBehaviorTree> BehaviorTree;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	TObjectPtr<UAIPerceptionComponent> AIPerceptionComponent;
-	FTimerHandle EnemyTime;
-	float LineOfSightTimer =2.f;
+	
 
+	
+
+	UPROPERTY(EditDefaultsOnly, Category = "Perception")
+	UAISenseConfig_Damage* DamageConfig;
 
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+
+	FTimerHandle EnemyTime;
+	float LineOfSightTimer =5.f;
+
+
 	void OnCleanTarget();
 };

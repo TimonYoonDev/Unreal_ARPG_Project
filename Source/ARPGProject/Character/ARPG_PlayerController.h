@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ARPGProject/UI/ARPG_MainWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "ARPG_PlayerController.generated.h"
 
@@ -13,16 +14,17 @@ UCLASS()
 class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 {
 	GENERATED_BODY()
-
+public:
 	AARPG_PlayerController();
 
+
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
-
-	/** Move Input Action */
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
@@ -43,6 +45,15 @@ class ARPGPROJECT_API AARPG_PlayerController : public APlayerController
 	UInputAction* DefenseAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetLockOnAction;
+
+
+	TSubclassOf<UARPG_MainWidget> HudWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
+	UARPG_MainWidget* MainWidget;
+
+
+
 protected:
 
 	virtual void OnPossess(APawn* InPawn) override;

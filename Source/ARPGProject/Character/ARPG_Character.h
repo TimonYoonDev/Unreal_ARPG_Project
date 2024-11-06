@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "ARPG_AIController.h"
 #include "ARPG_CharacterInterface.h"
+#include "ARPGProject/ARPG_GameInstance.h"
 
 #include "ARPGProject/ARPG_PlayerState.h"
 #include "ARPGProject/ARPG_WeaponBase.h"
@@ -17,6 +18,7 @@
 
 #include "ARPG_Character.generated.h"
 
+class USphereComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -30,6 +32,12 @@ class ARPGPROJECT_API AARPG_Character : public ACharacter, public IARPG_Characte
 	GENERATED_BODY()
 public:
 	AARPG_Character();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FName CharacterKey;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UAnimMontage* HitReactionMontageData;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -55,11 +63,19 @@ protected:
 	TSubclassOf<AARPG_WeaponBase> WeaponBase;
 
 	FRotator DirectionRotator;
-	TObjectPtr<UParticleSystem> HitParticleSystem;
+	UPROPERTY()
+	UParticleSystem* HitParticleSystem;
+	UPROPERTY()
+	UParticleSystem* ParryParticleSystem;
 
+	UPROPERTY()
 	AARPG_AIController* AIController;
+	UPROPERTY()
 	UWidgetComponent* HealthWidgetComponent;
+	UPROPERTY()
+	UARPG_GameInstance* GameInstance;
 public:
+	void SetCharacterKey(const FName InCharacterKey);
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void InputAttack();
@@ -73,11 +89,15 @@ public:
 
 	bool IsRolling() const;
 	bool IsDefending() const;
+	bool IsKnockBack() const;
 
 	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) override;
 	virtual void AttackCheckBegin_Implementation() override;
 	virtual void AttackCheckEnd_Implementation() override;
 	virtual void WeaponAttach_Implementation(const FName AttachSocketName) override;
+	virtual void HitKnockBack_Implementation(const UAnimMontage* HitReactionMontage) override;
+	virtual void FinishAttack_Implementation() override;
+	virtual void FinishAttackDeath() override;
 
 
 	virtual void BeginPlay() override;
@@ -85,12 +105,31 @@ public:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void Tick(float DeltaSeconds) override;
+
+	void SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget);
 protected:
 	UFUNCTION()
 	virtual void OnDeath();
 
 	
 private:
+
+	UPROPERTY(VisibleAnywhere, Category = "Finish Attack")
+	USphereComponent* FinishAttackCollider;
+
+	UPROPERTY(VisibleAnywhere, Category = "Assassinate")
+	USphereComponent* AssassinateCollider;
+
+	UFUNCTION()
+	void OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	bool bCanFinishAttack;
+	AActor* FinishAttackTargetActor;
 	
 	TObjectPtr<AARPG_PlayerState> PlayerState;
 	UPROPERTY()
@@ -99,14 +138,15 @@ private:
 	AARPG_WeaponBase* CreateWeapon(TSubclassOf<AARPG_WeaponBase> WeaponBase);
 	TArray<TObjectPtr<AARPG_WeaponBase>> EquipWeaponArray;
 	TArray<FARPG_CombatData> CombatDataArray;
+	FARPG_MontageData MontageData;
 
 	int CurrentWeaponIndex;
 
 	bool bEquipping;
 	bool bRolling;
-	bool bDefending;
 	bool bTargetLockOn;
-
+	bool bIsKnockBack;
+	bool bIsFinishAttack;
 	
 
 	virtual void WeaponEquip_Implementation(bool InEquipping) override;

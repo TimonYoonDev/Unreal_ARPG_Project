@@ -1,12 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ARPG_MeleeCombatComponent.h"
 
+#include "ARPGProject/ARPG_GameInstance.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-// Sets default values for this component's properties
 UARPG_MeleeCombatComponent::UARPG_MeleeCombatComponent()
 {
 	bComboState = false;
@@ -14,6 +11,11 @@ UARPG_MeleeCombatComponent::UARPG_MeleeCombatComponent()
 	NextComboMontage = nullptr;
 	StartComboMontage = nullptr;
 	AnimInstance = nullptr;
+}
+
+void UARPG_MeleeCombatComponent::SetMontageData(const FARPG_MontageData& InMontageData)
+{
+	MontageData = InMontageData;
 }
 
 void UARPG_MeleeCombatComponent::BeginPlay()
@@ -66,6 +68,40 @@ void UARPG_MeleeCombatComponent::SetNextCombo(const UAnimMontage* NewNextComboMo
 void UARPG_MeleeCombatComponent::SetStartComboMontage(UAnimMontage* InMontage)
 {
 	StartComboMontage = InMontage;
+}
+
+void UARPG_MeleeCombatComponent::Defense()
+{
+	bIsDefense = true;
+	ParryStart();
+}
+
+void UARPG_MeleeCombatComponent::DefenseComplete()
+{
+	bIsDefense = false;
+	bIsParry = false;
+	GetWorld()->GetTimerManager().ClearTimer(ParryTimerHandle);
+}
+
+bool UARPG_MeleeCombatComponent::IsDefense() const
+{
+	return bIsDefense;
+}
+
+void UARPG_MeleeCombatComponent::ParryStart()
+{
+	bIsParry = true;
+	GetWorld()->GetTimerManager().SetTimer(ParryTimerHandle, this, &UARPG_MeleeCombatComponent::ParryEnd, ParryTime, false);
+}
+
+void UARPG_MeleeCombatComponent::ParryEnd()
+{
+	bIsParry = false;
+}
+
+bool UARPG_MeleeCombatComponent::IsParry() const
+{
+	return bIsParry;
 }
 
 void UARPG_MeleeCombatComponent::PlayMontage(const UAnimMontage* Montage, const FName NextSection)

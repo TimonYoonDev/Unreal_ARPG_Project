@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ARPGProject/DataTableStructs.h"
 #include "Components/ActorComponent.h"
 #include "ARPG_MeleeCombatComponent.generated.h"
 
@@ -14,11 +15,23 @@ class ARPGPROJECT_API UARPG_MeleeCombatComponent : public UActorComponent
 public:
 	UARPG_MeleeCombatComponent();
 
+	void SetMontageData(const FARPG_MontageData& InMontageData);
 	void InputAttack();
 	void HeavyAttack(const UAnimMontage* NewHeavyAttackMontage);
 	void HeavyAttackComplete(const UAnimMontage* NewHeavyAttackMontage);
 	void SetNextCombo(const UAnimMontage* NewNextComboMontage);
 	void SetStartComboMontage(UAnimMontage* InMontage);
+
+	void Defense();
+	void DefenseComplete();
+	bool IsDefense() const;
+	void ParryStart();
+	void ParryEnd();
+	bool IsParry() const;
+	bool bIsDefense;
+	bool bIsParry;
+	FTimerHandle ParryTimerHandle;
+	float ParryTime = 0.5f;
 
 	FOnAttackEndDelegate OnAttackEndDelegate;
 
@@ -33,6 +46,7 @@ public:
 	bool GetMontagePlaying() const;
 
 private:
+	FARPG_MontageData MontageData;
 	bool bMontagePlaying;
 	bool bComboState;
 
