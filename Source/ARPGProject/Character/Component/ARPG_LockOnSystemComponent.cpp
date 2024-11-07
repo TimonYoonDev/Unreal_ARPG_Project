@@ -36,11 +36,11 @@ void UARPG_LockOnSystemComponent::TickComponent(float DeltaTime, ELevelTick Tick
 			SetTarget(nullptr);
 			return;
 		}
-		const FRotator CurrentRot = OwnerCharacter->GetControlRotation();
+		const FRotator CurrentRot = OwnerCharacter->GetActorRotation();// GetControlRotation();
 		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(OwnerCharacter->GetActorLocation(), TargetCharacter->GetActorLocation());
 		const FRotator ResultRot = UKismetMathLibrary::RInterpTo(CurrentRot, TargetRot, DeltaTime, 20.f);
 
-		OwnerCharacter->GetController()->SetControlRotation(ResultRot);
+		OwnerCharacter->SetActorRotation(ResultRot);// GetController()->SetControlRotation(ResultRot);
 	}
 }
 

@@ -89,7 +89,6 @@ AARPG_Character::AARPG_Character()
 	FinishAttackCollider->SetSphereRadius(100.0f);  // 필요에 따라 범위를 조정
 	FinishAttackCollider->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
 	FinishAttackCollider->SetGenerateOverlapEvents(false);
-	FinishAttackCollider->SetHiddenInGame(false);
 
 	// 오버랩 이벤트 바인딩
 	FinishAttackCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapBegin);
@@ -120,7 +119,6 @@ void AARPG_Character::BeginPlay()
 	{
 		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_Character::BeginPlay "));
 	}
-	//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("ff %f"), PlayerState->GetCurrentHeath()));
 
 
 	if (GameInstance)
@@ -193,6 +191,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		{
 			if (MeleeCombatComponent->IsParry())
 			{
+				MeleeCombatComponent->PlayMontage(MontageData.DefenseReactionMontage);
 				UGameplayStatics::SpawnEmitterAtLocation(
 					GetWorld(), ParryParticleSystem, PointDamageEvent.HitInfo.Location,
 					FRotator::ZeroRotator, FVector(1.0f), true);
@@ -236,15 +235,6 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 void AARPG_Character::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	/*if(TargetActor)
-	{
-		const FRotator CurrentRot = GetControlRotation();
-		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetActor->GetActorLocation());
-		const FRotator ResultRot = UKismetMathLibrary::RInterpTo(CurrentRot, TargetRot, DeltaSeconds, 20.f);
-
-		GetController()->SetControlRotation(ResultRot);
-	}*/
 }
 
 void AARPG_Character::SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget)
@@ -325,7 +315,7 @@ void AARPG_Character::InputAttack()
 		if(FinishAttackTargetActor)
 		{
 			FVector DirectionToTarget = FinishAttackTargetActor->GetActorLocation() - GetActorLocation();
-			DirectionToTarget.Z = 0; // 캐릭터의 높이는 유지하며 평면 회전만 수행
+			DirectionToTarget.Z = 0;
 
 			FRotator TargetRotation = DirectionToTarget.Rotation();
 			SetActorRotation(TargetRotation);
@@ -337,6 +327,7 @@ void AARPG_Character::InputAttack()
 		}
 		return;
 	}
+	LockOnSystemComponent->SetTarget(LockOnSystemComponent->FindClosestTarget());
 
 	if (LockOnSystemComponent->IsLockOnTarget() == false)
 	{
@@ -535,7 +526,8 @@ void AARPG_Character::FinishAttack_Implementation()
 
 void AARPG_Character::FinishAttackDeath()
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
+	AttributeComponent->TakeDamage(AttributeComponent->Health);
 	if (HealthWidgetComponent)
 	{
 		HealthWidgetComponent->SetHiddenInGame(true);
@@ -552,7 +544,7 @@ void AARPG_Character::OnDeath()
 		
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesSimulatePhysics(true);
-		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ragdoll"));
+		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
 		if(HealthWidgetComponent)
 		{
 			HealthWidgetComponent->SetHiddenInGame(true);
@@ -566,11 +558,9 @@ void AARPG_Character::OnFinishAttackOverlapBegin(UPrimitiveComponent* Overlapped
 {
 	if ( OtherActor && OtherActor != this)
 	{
-		AARPG_Character* Character = Cast<AARPG_Character>(OtherActor);
-		if(Character)
+		if(AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
 		{
-			UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapBegin");
-
+			//UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapBegin");
 			Character->SetCanFinishAttack(true, this);
 		}
 	}
@@ -581,10 +571,9 @@ void AARPG_Character::OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedCo
 {
 	if (OtherActor && OtherActor != this)
 	{
-		AARPG_Character* Character = Cast<AARPG_Character>(OtherActor);
-		if (Character)
+		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
 		{
-			UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapEnd");
+			//UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapEnd");
 			Character->SetCanFinishAttack(false, nullptr);
 		}
 	}

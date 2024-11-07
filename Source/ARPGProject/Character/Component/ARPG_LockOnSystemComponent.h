@@ -35,6 +35,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float MaxLockOnAngle = 90.f;
 
+public:
 	AActor* FindClosestTarget() const;
 	void SetTarget(AActor* NewTargetActor);
 	void SetMovementLockOnTarget() const;
