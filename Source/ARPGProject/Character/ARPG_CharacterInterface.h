@@ -42,14 +42,9 @@ public:
 	void WeaponEquip(const bool InEquipping);
 	virtual void WeaponEquip_Implementation(const bool InEquipping) = 0;
 
+	virtual void ParryingReaction() = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void HitKnockBack(const UAnimMontage* HitReactionMontage);
-	virtual void HitKnockBack_Implementation(const UAnimMontage* HitReactionMontage) = 0;
-
-	UFUNCTION(BlueprintNativeEvent)
-	void FinishAttack();
-	virtual void FinishAttack_Implementation() = 0;
+	virtual void FinishAttack() = 0;
 
 	virtual void FinishAttackDeath() = 0;
 

@@ -74,6 +74,12 @@ protected:
 	UWidgetComponent* HealthWidgetComponent;
 	UPROPERTY()
 	UARPG_GameInstance* GameInstance;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> ParkourAnim;
+
+	UPROPERTY()
+	USoundBase* DeathSound;
 public:
 	void SetCharacterKey(const FName InCharacterKey);
 	void Move(const FInputActionValue& Value);
@@ -85,6 +91,7 @@ public:
 	void InputRoll(const FInputActionValue& Value);
 	void InputDefense(const FInputActionValue& Value);
 	void InputTargetLockOn(const FInputActionValue& Value);
+	void InputParkour(const FInputActionValue& Value);
 	void SetWeapon(int NextWeaponIndex);
 
 	bool IsRolling() const;
@@ -95,8 +102,8 @@ public:
 	virtual void AttackCheckBegin_Implementation() override;
 	virtual void AttackCheckEnd_Implementation() override;
 	virtual void WeaponAttach_Implementation(const FName AttachSocketName) override;
-	virtual void HitKnockBack_Implementation(const UAnimMontage* HitReactionMontage) override;
-	virtual void FinishAttack_Implementation() override;
+	virtual void ParryingReaction() override;
+	virtual void FinishAttack() override;
 	virtual void FinishAttackDeath() override;
 
 
@@ -105,6 +112,9 @@ public:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	virtual void Tick(float DeltaSeconds) override;
+	void ParkourScanner();
+	void ParkourScannerSub(FHitResult HitResult);
+
 
 	void SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget);
 protected:

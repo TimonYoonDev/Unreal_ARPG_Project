@@ -45,6 +45,9 @@ private:
 	UInputAction* DefenseAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetLockOnAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ParkourAction;
+
 
 
 	TSubclassOf<UARPG_MainWidget> HudWidgetClass;

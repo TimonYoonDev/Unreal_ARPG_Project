@@ -49,6 +49,7 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(RollAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputRoll);
 		EnhancedInputComponent->BindAction(DefenseAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputDefense);
 		EnhancedInputComponent->BindAction(TargetLockOnAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputTargetLockOn);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputParkour);
 	}
 
 	if (HudWidgetClass)

@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "InputActionValue.h"
+#include "KismetTraceUtils.h"
 #include "ARPGProject/ARPG_GameInstance.h"
 #include "ARPGProject/ARPG_GameMode.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
@@ -61,6 +62,8 @@ AARPG_Character::AARPG_Character()
 		{
 			OnDeath();
 		}
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		SetActorEnableCollision(true);
 	});
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
@@ -76,6 +79,15 @@ AARPG_Character::AARPG_Character()
 	if (ParryParticle.Succeeded())
 	{
 		ParryParticleSystem = ParryParticle.Object;
+	}
+	if(const ConstructorHelpers::FObjectFinder<UAnimMontage> ParkourMontage(TEXT("/Script/Engine.AnimMontage'/Game/ARPG/Characters/Barbarian/Animations/Parkour/ARPG_Parkour_Vaulting_Montage.ARPG_Parkour_Vaulting_Montage'")); ParkourMontage.Succeeded())
+	{
+		ParkourAnim = ParkourMontage.Object;
+	}
+
+	if (const ConstructorHelpers::FObjectFinder<USoundBase> Sound(TEXT("/Script/MetasoundEngine.MetaSoundSource'/Game/ARPG/Audio/Combat/MSS_Death.MSS_Death'")); Sound.Succeeded())
+	{
+		DeathSound = Sound.Object;
 	}
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -138,7 +150,6 @@ void AARPG_Character::BeginPlay()
 				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
 				CombatDataArray.Add(FARPG_CombatData());
 			}
-
 		}
 		else
 		{
@@ -189,28 +200,31 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 
 		if (MeleeCombatComponent)
 		{
-			if (MeleeCombatComponent->IsParry())
-			{
-				MeleeCombatComponent->PlayMontage(MontageData.DefenseReactionMontage);
-				UGameplayStatics::SpawnEmitterAtLocation(
-					GetWorld(), ParryParticleSystem, PointDamageEvent.HitInfo.Location,
-					FRotator::ZeroRotator, FVector(1.0f), true);
-
-				if (EventInstigator->GetPawn()->Implements<UARPG_CharacterInterface>())
-				{
-					Execute_HitKnockBack(EventInstigator->GetPawn(), HitReactionMontageData);
-					AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode());
-					if (GameMode)
-					{
-						GameMode->StartSlowMotion(0.2f, 0.5f);
-					}
-				}
-				return 0;
-			}
-
 			if (MeleeCombatComponent->IsDefense())
 			{
+				FVector DirectionToTarget = EventInstigator->GetPawn()->GetActorLocation() - GetActorLocation();
+				DirectionToTarget.Z = 0;
+
+				const FRotator TargetRotation = DirectionToTarget.Rotation();
+				SetActorRotation(TargetRotation);
+
+				UGameplayStatics::SpawnEmitterAtLocation(
+					GetWorld(), ParryParticleSystem, PointDamageEvent.HitInfo.Location,
+					FRotator::ZeroRotator, FVector(0.5f), true);
+
 				MeleeCombatComponent->PlayMontage(MontageData.DefenseReactionMontage);
+
+				if (MeleeCombatComponent->IsParry())
+				{
+					if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(EventInstigator->GetPawn()))
+					{
+						Interface->ParryingReaction();
+						if (AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode()))
+						{
+							GameMode->StartSlowMotion(0.2f, 0.5f);
+						}
+					}
+				}
 				return 0;
 			}
 		}
@@ -222,7 +236,11 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 			Rotator, FVector(0.4f), true
 		);
 		const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PointDamageEvent.HitInfo.Location, GetActorLocation());
-		AnimInstance->HitTrigger(LookAtRotation.Yaw);
+		if (AnimInstance != nullptr)
+		{
+			AnimInstance->HitTrigger(LookAtRotation.Yaw);
+		}
+		
 	}
 
 	const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(EventInstigator->GetPawn()->GetActorRotation());
@@ -235,7 +253,67 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 void AARPG_Character::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	//ParkourScanner();
 }
+
+void AARPG_Character::ParkourScanner()
+{
+	for (size_t i = 0; i < 3; ++i)
+	{
+		FHitResult HitResult;
+		FVector Start = GetActorLocation() + FVector(0, 0, i * 30);
+		FVector End = GetActorForwardVector() * 180.0f + Start;
+		FCollisionShape CollisionShape;
+		CollisionShape.SetSphere(5.f);
+
+		GetWorld()->SweepSingleByChannel(HitResult, Start, End, FQuat::Identity, ECC_Visibility, CollisionShape);
+#if ENABLE_DRAW_DEBUG
+		DrawDebugSweptSphere(GetWorld(), Start, End, 5.f, FColor::Red, false, 1.f);
+#endif
+
+		if(HitResult.IsValidBlockingHit())
+		{
+			ParkourScannerSub(HitResult);
+			break;
+		}
+	}
+	
+}
+
+void AARPG_Character::ParkourScannerSub(FHitResult HitResult)
+{
+	for (size_t i = 0; i < 5; ++i)
+	{
+		FVector A = HitResult.Location + FVector(0.f, 0.f, 100.f);
+		FVector B = GetActorForwardVector() * (i * 50.f);
+		UE_LOG(LogTemp, Warning, TEXT("test : %s / %s"), *A.ToString(), *B.ToString());
+		FVector Start = A + B;
+		FVector End = Start - FVector(0, 0, 100.f);
+		FCollisionShape CollisionShape;
+		CollisionShape.SetSphere(5.f);
+
+		GetWorld()->SweepSingleByChannel(HitResult, Start, End, FQuat::Identity, ECC_Visibility, CollisionShape);
+#if ENABLE_DRAW_DEBUG
+		DrawDebugSweptSphere(GetWorld(), Start, End, 5.f, FColor::Red, false, 1.f);
+#endif
+
+		if(HitResult.IsValidBlockingHit())
+		{
+
+#if ENABLE_DRAW_DEBUG
+			DrawDebugSphere(GetWorld(), HitResult.Location, 5.f, 0, FColor::Green, false, 1.f);
+#endif
+			float Z = HitResult.Location.Z - GetActorLocation().Z;
+			SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, HitResult.Location.Z));
+			if (AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode()))
+			{
+				GameMode->StartSlowMotion(0.2f, 0.5f);
+			}
+			break;
+		}
+	}
+}
+
 
 void AARPG_Character::SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget)
 {
@@ -317,12 +395,12 @@ void AARPG_Character::InputAttack()
 			FVector DirectionToTarget = FinishAttackTargetActor->GetActorLocation() - GetActorLocation();
 			DirectionToTarget.Z = 0;
 
-			FRotator TargetRotation = DirectionToTarget.Rotation();
+			const FRotator TargetRotation = DirectionToTarget.Rotation();
 			SetActorRotation(TargetRotation);
 			MeleeCombatComponent->PlayMontage(MontageData.FinishAttackMontage);
-			if(FinishAttackTargetActor->Implements<UARPG_CharacterInterface>())
+			if(IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(FinishAttackTargetActor))
 			{
-				IARPG_CharacterInterface::Execute_FinishAttack(FinishAttackTargetActor);
+				Interface->FinishAttack();
 			}
 		}
 		return;
@@ -400,6 +478,17 @@ void AARPG_Character::InputTargetLockOn(const FInputActionValue& Value)
 		return;
 	}
 	LockOnSystemComponent->InputTargetLockOn();
+}
+
+void AARPG_Character::InputParkour(const FInputActionValue& Value)
+{
+	if (Value.Get<bool>() == false)
+	{
+		MeleeCombatComponent->PlayMontage(ParkourAnim);
+		GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+		SetActorEnableCollision(false);
+		ParkourScanner();
+	}
 }
 
 void AARPG_Character::SetWeapon(int NextWeaponIndex)
@@ -502,23 +591,19 @@ void AARPG_Character::AttackCheckEnd_Implementation()
 
 void AARPG_Character::WeaponAttach_Implementation(const FName AttachSocketName)
 {
-	FString dd = AttachSocketName.ToString();
-	UE_LOG(LogTemp, Warning, TEXT("Weapon Attach : %s"), *AttachSocketName.ToString());
-	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	CurrentWeapon->AttachToComponent(GetMesh(), AttachmentRules, AttachSocketName);
 	CurrentWeapon->SetActorHiddenInGame(false);
 }
 
-void AARPG_Character::HitKnockBack_Implementation(const UAnimMontage* HitReactionMontage)
+void AARPG_Character::ParryingReaction()
 {
-	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Hit Knock Back"));
-
 	bIsKnockBack = true;
 	FinishAttackCollider->SetGenerateOverlapEvents(true);
 	MeleeCombatComponent->PlayMontage(MontageData.ParryingReactionMontage);
 }
 
-void AARPG_Character::FinishAttack_Implementation()
+void AARPG_Character::FinishAttack()
 {
 	bIsFinishAttack = true;
 	MeleeCombatComponent->PlayMontage(MontageData.FinishAttackReactionMontage);
@@ -533,6 +618,7 @@ void AARPG_Character::FinishAttackDeath()
 		HealthWidgetComponent->SetHiddenInGame(true);
 	}
 	AIController->StopAI();
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), DeathSound, GetActorLocation(), GetActorRotation());
 }
 
 void AARPG_Character::OnDeath()
@@ -550,6 +636,7 @@ void AARPG_Character::OnDeath()
 			HealthWidgetComponent->SetHiddenInGame(true);
 		}
 		AIController->StopAI();
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), DeathSound, GetActorLocation(), GetActorRotation());
 	}
 }
 
