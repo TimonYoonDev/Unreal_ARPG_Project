@@ -11,6 +11,7 @@
 #include "ARPGProject/Animation/ARPG_AnimInstance.h"
 
 #include "Component/ARPG_AttributeComponent.h"
+#include "Component/ARPG_CameraComponent.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
 #include "Component/ARPG_MeleeCombatComponent.h"
 #include "GameFramework/Character.h"
@@ -45,6 +46,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UARPG_CameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_MeleeCombatComponent* MeleeCombatComponent;
@@ -84,7 +88,7 @@ public:
 	void SetCharacterKey(const FName InCharacterKey);
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
-	void InputAttack();
+	void InputAttack(const FInputActionValue& Value);
 	void HeavyAttackStart();
 	void HeavyAttackCompleted();
 	void InputWeaponChange(const FInputActionValue& Value);
@@ -92,6 +96,15 @@ public:
 	void InputDefense(const FInputActionValue& Value);
 	void InputTargetLockOn(const FInputActionValue& Value);
 	void InputParkour(const FInputActionValue& Value);
+	void InputBowMode(const FInputActionValue& Value);
+	bool bIsBowMode = false;
+	bool bIsBowDrawing = false;
+	TSubclassOf<AARPG_WeaponBase> BowWeaponClass;
+	UPROPERTY()
+	TObjectPtr<AARPG_WeaponBase> BowWeapon;
+
+	TSubclassOf<AARPG_WeaponBase> ArrowClass;
+	USceneComponent* ArrowPos;
 	void SetWeapon(int NextWeaponIndex);
 
 	bool IsRolling() const;

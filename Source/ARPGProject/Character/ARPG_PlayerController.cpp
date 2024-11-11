@@ -42,7 +42,7 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, ARPG_Character, &AARPG_Character::StopJumping);
 
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::InputAttack);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputAttack);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Started, ARPG_Character, &AARPG_Character::HeavyAttackStart);
 		EnhancedInputComponent->BindAction(HeavyAttackAction, ETriggerEvent::Completed, ARPG_Character, &AARPG_Character::HeavyAttackCompleted);
 		EnhancedInputComponent->BindAction(WeaponChangeAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputWeaponChange);
@@ -50,6 +50,9 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(DefenseAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputDefense);
 		EnhancedInputComponent->BindAction(TargetLockOnAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputTargetLockOn);
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputParkour);
+		EnhancedInputComponent->BindAction(BowDrawAction, ETriggerEvent::Triggered, ARPG_Character, &AARPG_Character::InputBowMode);
+
+
 	}
 
 	if (HudWidgetClass)

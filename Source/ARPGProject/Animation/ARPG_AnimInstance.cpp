@@ -48,6 +48,9 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		HitTime -= DeltaSeconds;
 		bHit = HitTime > 0;
 	}
+
+	IsBowMode = Character->bIsBowMode;
+	IsBowDrawing = Character->bIsBowDrawing;
 }
 
 void UARPG_AnimInstance::EquipWeaponTrigger()
