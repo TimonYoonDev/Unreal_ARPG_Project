@@ -26,7 +26,7 @@ class ARPGPROJECT_API UARPG_CameraComponent : public USceneComponent
 public:
 	UARPG_CameraComponent();
 
-	void Init(USpringArmComponent* cb, UCameraComponent* fc);
+	void Init(USpringArmComponent* InCameraBoom, UCameraComponent* InFollowCamera);
 	void OriginCameraMove();
 	void AimCameraMove();
 	void FinishAttackCameraMove();

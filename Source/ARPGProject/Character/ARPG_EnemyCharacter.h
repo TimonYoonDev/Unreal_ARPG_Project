@@ -33,6 +33,8 @@ public:
 	virtual void SetLockOnWidget(const bool bShowWidget);
 	virtual void SetWalkSpeed_Implementation(const float InSpeed) override;
 
+	void WeaponGrip();
+
 protected:
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void UpdateHealthBar();

@@ -139,7 +139,7 @@ void UARPG_MeleeCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInt
 	OnAttackEndDelegate.Broadcast();
 }
 
-bool UARPG_MeleeCombatComponent::GetMontagePlaying() const
+bool UARPG_MeleeCombatComponent::IsMontagePlaying() const
 {
 	return bMontagePlaying;
 }

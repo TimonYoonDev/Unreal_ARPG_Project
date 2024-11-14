@@ -12,8 +12,8 @@ void UARPG_AN_WeaponAttach::Notify(USkeletalMeshComponent* MeshComp, UAnimSequen
 	{
 		return;
 	}
-	if(Owner->Implements<UARPG_CharacterInterface>())
+	if(IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(Owner))
 	{
-		IARPG_CharacterInterface::Execute_WeaponAttach(Owner, AttachSocketName);
+		Interface->WeaponAttach(AttachSocketName);
 	}
 }

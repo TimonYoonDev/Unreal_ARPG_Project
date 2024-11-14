@@ -6,6 +6,7 @@
 #include "ARPGProject/ARPG_GameInstance.h"
 
 #include "ARPGProject/ARPG_PlayerState.h"
+#include "ARPGProject/ARPG_Projectile.h"
 #include "ARPGProject/ARPG_WeaponBase.h"
 #include "ARPGProject/DataTableStructs.h"
 #include "ARPGProject/Animation/ARPG_AnimInstance.h"
@@ -27,6 +28,8 @@ class UInputAction;
 struct FInputActionValue;
 
 
+DECLARE_MULTICAST_DELEGATE_OneParam(OnChangedBowAimMode, bool bIsAimMode)
+
 UCLASS()
 class ARPGPROJECT_API AARPG_Character : public ACharacter, public IARPG_CharacterInterface
 {
@@ -40,6 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UAnimMontage* HitReactionMontageData;
 
+	OnChangedBowAimMode OnChangedBowAimMode;
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -50,18 +54,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UARPG_CameraComponent* CameraComponent;
 
+	///
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_MeleeCombatComponent* MeleeCombatComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_AttributeComponent* AttributeComponent;
 
-	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_LockOnSystemComponent* LockOnSystemComponent;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	AARPG_WeaponBase* CurrentWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AARPG_WeaponBase> WeaponBase;
@@ -99,13 +101,23 @@ public:
 	void InputBowMode(const FInputActionValue& Value);
 	bool bIsBowMode = false;
 	bool bIsBowDrawing = false;
+
+	bool IsMainWeaponGrip() const;
+	float PressBowDrawingPower;
+	const float PressBowDrawingMaxPower = 3.f;
+	void PressBowDrawing();
 	TSubclassOf<AARPG_WeaponBase> BowWeaponClass;
 	UPROPERTY()
 	TObjectPtr<AARPG_WeaponBase> BowWeapon;
 
-	TSubclassOf<AARPG_WeaponBase> ArrowClass;
+	TSubclassOf<AARPG_Projectile> ArrowClass;
+	UPROPERTY()
 	USceneComponent* ArrowPos;
-	void SetWeapon(int NextWeaponIndex);
+
+	FVector GetAimLocation() const;
+	void ShootArrow();
+
+	float BowAimingPitch;
 
 	bool IsRolling() const;
 	bool IsDefending() const;
@@ -114,7 +126,7 @@ public:
 	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) override;
 	virtual void AttackCheckBegin_Implementation() override;
 	virtual void AttackCheckEnd_Implementation() override;
-	virtual void WeaponAttach_Implementation(const FName AttachSocketName) override;
+	virtual void WeaponAttach(const FName AttachSocketName) override;
 	virtual void ParryingReaction() override;
 	virtual void FinishAttack() override;
 	virtual void FinishAttackDeath() override;
@@ -133,7 +145,7 @@ public:
 protected:
 	UFUNCTION()
 	virtual void OnDeath();
-
+	bool bIsMainWeaponGrip;
 	
 private:
 
@@ -152,27 +164,24 @@ private:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	bool bCanFinishAttack;
+	UPROPERTY(VisibleAnywhere, Category = "Finish Attack")
 	AActor* FinishAttackTargetActor;
 	
 	TObjectPtr<AARPG_PlayerState> PlayerState;
 	UPROPERTY()
 	TObjectPtr<UARPG_AnimInstance> AnimInstance;
 
-	AARPG_WeaponBase* CreateWeapon(TSubclassOf<AARPG_WeaponBase> WeaponBase);
-	TArray<TObjectPtr<AARPG_WeaponBase>> EquipWeaponArray;
-	TArray<FARPG_CombatData> CombatDataArray;
+	AARPG_WeaponBase* CreateWeapon(const TSubclassOf<AARPG_WeaponBase>& InWeaponBase);
+	UPROPERTY()
+	TObjectPtr<AARPG_WeaponBase> MainWeapon;
+	FARPG_CombatData CombatData;
 	FARPG_MontageData MontageData;
 
-	int CurrentWeaponIndex;
-
-	bool bEquipping;
+	
 	bool bRolling;
 	bool bTargetLockOn;
 	bool bIsKnockBack;
 	bool bIsFinishAttack;
-	
-
-	virtual void WeaponEquip_Implementation(bool InEquipping) override;
 
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

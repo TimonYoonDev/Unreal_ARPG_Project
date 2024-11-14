@@ -26,7 +26,6 @@ USTRUCT(BlueprintType)
 struct FARPG_CombatData: public FTableRowBase
 {
 	GENERATED_BODY()
-	FARPG_CombatData();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 CombatPoseIndex;
@@ -44,10 +43,6 @@ struct FARPG_CombatData: public FTableRowBase
 	bool bChargedAttack;
 
 };
-
-inline FARPG_CombatData::FARPG_CombatData(): CombatPoseIndex(0), bChargedAttack(false)
-{
-}
 
 USTRUCT(BlueprintType)
 struct FARPG_CharacterData: public FTableRowBase

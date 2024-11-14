@@ -9,18 +9,6 @@
 UARPG_CameraComponent::UARPG_CameraComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	auto dd = CreateDefaultSubobject<USceneComponent>(TEXT("Test Scene"));
-	/*CameraBoom = 
-	CameraBoom->SetupAttachment(this);
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FC"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);*/
-	/*CameraBoom->SetupAttachment(this);
-	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;*/
-
-	/*FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	FollowCamera->bUsePawnControlRotation = false;*/
 
 	OriginCameraInfo = new FARPG_CameraInfo;
 	OriginCameraInfo->TargetArmLength = 250.f;
@@ -40,17 +28,16 @@ UARPG_CameraComponent::UARPG_CameraComponent()
 	FinishAttackCameraInfo->FieldOfView = 90;
 	FinishAttackCameraInfo->bEnableCameraLag = false;
 
-
 	BeginCameraInfo = OriginCameraInfo;
 	EndCameraInfo = OriginCameraInfo;
 	CurrentCameraInfo = new FARPG_CameraInfo;
 
 }
 
-void UARPG_CameraComponent::Init(USpringArmComponent* cb, UCameraComponent* fc)
+void UARPG_CameraComponent::Init(USpringArmComponent* InCameraBoom, UCameraComponent* InFollowCamera)
 {
-	CameraBoom = cb;
-	FollowCamera = fc;
+	CameraBoom = InCameraBoom;
+	FollowCamera = InFollowCamera;
 }
 
 void UARPG_CameraComponent::OriginCameraMove()

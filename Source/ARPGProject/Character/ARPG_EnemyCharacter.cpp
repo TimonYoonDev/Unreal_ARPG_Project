@@ -8,7 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-const FName AARPG_EnemyCharacter::LockOnPivotKey(TEXT("spine_05"));
+const FName AARPG_EnemyCharacter::LockOnPivotKey(TEXT("LockOnPivot"));
 
 AARPG_EnemyCharacter::AARPG_EnemyCharacter()
 {
@@ -29,6 +29,12 @@ AARPG_EnemyCharacter::AARPG_EnemyCharacter()
 void AARPG_EnemyCharacter::SetWalkSpeed_Implementation(const float InSpeed)
 {
 	GetCharacterMovement()->MaxWalkSpeed = InSpeed;
+}
+
+void AARPG_EnemyCharacter::WeaponGrip()
+{
+	bIsMainWeaponGrip = true;
+	WeaponAttach("Sword_Grip");
 }
 
 void AARPG_EnemyCharacter::BeginPlay()
@@ -61,6 +67,8 @@ void AARPG_EnemyCharacter::BeginPlay()
 			LockOnWidgetComponent->SetVisibility(false);
 		}
 	}
+
+	
 }
 
 void AARPG_EnemyCharacter::SetLockOnWidget(const bool bShowWidget)

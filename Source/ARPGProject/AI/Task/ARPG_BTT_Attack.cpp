@@ -15,16 +15,13 @@ UARPG_BTT_Attack::UARPG_BTT_Attack()
 EBTNodeResult::Type UARPG_BTT_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
-	UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), TEXT("UARPG_BTT_Attack"), *OwnerActor->GetActorNameOrLabel());
 	Result = EBTNodeResult::InProgress;
-	if (AARPG_Character* Character = Cast<AARPG_Character>(OwnerActor); Character != nullptr)
+	if (const AARPG_Character* Character = Cast<AARPG_Character>(OwnerActor); Character != nullptr)
 	{
 		IsAttacking = true;
-		UKismetSystemLibrary::PrintString(GetWorld(), "Attack");
 		Character->GetMeleeCombatComponent()->OnAttackEndDelegate.Remove(OnAttackEndDelegateHandle);
 		OnAttackEndDelegateHandle = Character->GetMeleeCombatComponent()->OnAttackEndDelegate.AddUObject(this, &UARPG_BTT_Attack::OnAttackEnd);
 		Character->GetMeleeCombatComponent()->InputAttack();
-
 	}
 	return Result;
 }
@@ -34,7 +31,6 @@ void UARPG_BTT_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMe
 	Super::TickTask(OwnerComp, NodeMemory, DeltaSeconds);
 	if(IsAttacking == false)
 	{
-		UKismetSystemLibrary::PrintString(GetWorld(), "Attack Success");
 		FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 	}
 }

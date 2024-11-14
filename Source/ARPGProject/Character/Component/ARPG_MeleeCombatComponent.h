@@ -25,6 +25,7 @@ public:
 	void Defense();
 	void DefenseComplete();
 	bool IsDefense() const;
+
 	void ParryStart();
 	void ParryEnd();
 	bool IsParry() const;
@@ -43,7 +44,7 @@ public:
 
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	bool GetMontagePlaying() const;
+	bool IsMontagePlaying() const;
 
 private:
 	FARPG_MontageData MontageData;

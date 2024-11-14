@@ -3,7 +3,10 @@
 
 #include "ARPG_AnimInstance.h"
 
+#include <filesystem>
+
 #include "KismetAnimationLibrary.h"
+#include "AnimNotifies/AnimNotify_PlayMontageNotify.h"
 #include "ARPGProject/Character/ARPG_Character.h"
 #include "GameFramework/Character.h"
 
@@ -20,6 +23,14 @@ void UARPG_AnimInstance::NativeInitializeAnimation()
 void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
+	if(bExecuteNextFrame)
+	{
+		NativeLateUpdateAnimation();
+	}
+	else
+	{
+		bExecuteNextFrame = true;
+	}
 
 	if (CharacterMovement == nullptr)
 		return;
@@ -32,36 +43,29 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
 	IsDefending = Character->IsDefending();
-	if(Character->GetLockOnSystemComponent())
+	if (Character->GetLockOnSystemComponent())
 	{
 		IsLockOnTarget = Character->GetLockOnSystemComponent()->IsLockOnTarget();
 	}
-	
-	if(bEquipWeapon)
-	{
-		EquipTime -= DeltaSeconds;
-		bEquipWeapon = EquipTime > 0;
-	}
 
-	if(bHit)
+	if (bHit)
 	{
 		HitTime -= DeltaSeconds;
 		bHit = HitTime > 0;
 	}
 
+	bIsMainWeaponGrip = Character->IsMainWeaponGrip();
+
 	IsBowMode = Character->bIsBowMode;
 	IsBowDrawing = Character->bIsBowDrawing;
+	BowAimingPitch = Character->BowAimingPitch;
+	BowAimingAlpha = IsBowMode ? 1 : 0;
 }
 
-void UARPG_AnimInstance::EquipWeaponTrigger()
+void UARPG_AnimInstance::NativeLateUpdateAnimation()
 {
-	bEquipWeapon = true;
-	EquipTime = 1.f;
-}
-
-void UARPG_AnimInstance::SetEquipWeaponIndex(const int InWeaponIndex)
-{
-	EquipWeaponIndex = InWeaponIndex;
+	bExecuteNextFrame = false;
+	bIsCurrentMainWeaponGrip = bIsMainWeaponGrip;
 }
 
 void UARPG_AnimInstance::HitTrigger(const float InHitAngle)

@@ -10,10 +10,12 @@
 #include "KismetTraceUtils.h"
 #include "ARPGProject/ARPG_GameInstance.h"
 #include "ARPGProject/ARPG_GameMode.h"
+#include "ARPGProject/ARPG_Projectile.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
 #include "Components/SphereComponent.h"
 
 #include "Engine/DamageEvents.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystem.h"
@@ -56,7 +58,7 @@ AARPG_Character::AARPG_Character()
 	CameraComponent = CreateDefaultSubobject<UARPG_CameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->Init(CameraBoom, FollowCamera);
 
-	MeleeCombatComponent = CreateDefaultSubobject<UARPG_MeleeCombatComponent>(TEXT("MeleeCombatComp"));
+	MeleeCombatComponent = CreateDefaultSubobject<UARPG_MeleeCombatComponent>(TEXT("MeleeCombatComponent"));
 	MeleeCombatComponent->OnAttackEndDelegate.AddLambda([this]() -> void
 	{
 		bIsKnockBack = false;
@@ -98,7 +100,7 @@ AARPG_Character::AARPG_Character()
 		BowWeaponClass = Bow.Class;
 	}
 
-	if (static ConstructorHelpers::FClassFinder<AActor> Arrow(TEXT("/Script/Engine.Blueprint'/Game/ARPG/Blueprints/Projectile/BP_Projectile_Arrow.BP_Projectile_Arrow_C'")); Arrow.Succeeded())
+	if (static ConstructorHelpers::FClassFinder<AARPG_Projectile> Arrow(TEXT("/Script/Engine.Blueprint'/Game/ARPG/Blueprints/Projectile/BP_Projectile_Arrow.BP_Projectile_Arrow_C'")); Arrow.Succeeded())
 	{
 		ArrowClass = Arrow.Class;
 	}
@@ -120,10 +122,8 @@ AARPG_Character::AARPG_Character()
 	FinishAttackCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapBegin);
 	FinishAttackCollider->OnComponentEndOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapEnd);
 
-	//CameraBoom->SocketOffset = FVector(0, 0, 130);
-
 	ArrowPos = CreateDefaultSubobject<USceneComponent>(TEXT("ArrowPos"));
-	ArrowPos->SetupAttachment(GetMesh(), "arrow_socket");
+	ArrowPos->SetupAttachment(GetMesh(), "Arrow_Grip");
 }
 
 
@@ -146,61 +146,6 @@ void AARPG_Character::BeginPlay()
 		SetCharacterKey(FName("Barbarian"));
 	}
 	PlayerState = GetController()->GetPlayerState<AARPG_PlayerState>();
-	if (PlayerState)
-	{
-		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("AARPG_Character::BeginPlay "));
-	}
-
-	BowWeapon = CreateWeapon(BowWeaponClass);
-	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-	BowWeapon->AttachToComponent(GetMesh(), AttachmentRules, "weapon_l_equip_socket");
-
-	if (GameInstance)
-	{
-		const FString RowName("1");
-		// TryGetWeaponData 호출
-		if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData(RowName, WeaponData))
-		{
-			// 성공적으로 무기 데이터를 얻은 경우
-			EquipWeaponArray.Add(CreateWeapon(WeaponData.WeaponClass));
-			if (FARPG_CombatData CombatData; GameInstance->TryGetCombatData(WeaponData.CombatDataRowName, CombatData))
-			{
-				CombatDataArray.Add(CombatData);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
-				CombatDataArray.Add(FARPG_CombatData());
-			}
-		}
-		else
-		{
-			// 무기 데이터를 찾지 못한 경우
-			UE_LOG(LogTemp, Warning, TEXT("Weapon data for row %s not found"), *RowName);
-		}
-		const FString RowName2("2");
-		// TryGetWeaponData 호출
-		if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData(RowName2, WeaponData))
-		{
-			// 성공적으로 무기 데이터를 얻은 경우
-			EquipWeaponArray.Add(CreateWeapon(WeaponData.WeaponClass));
-			if (FARPG_CombatData CombatData; GameInstance->TryGetCombatData(WeaponData.CombatDataRowName, CombatData))
-			{
-				CombatDataArray.Add(CombatData);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Combat data for row %s not found"), *WeaponData.CombatDataRowName);
-				CombatDataArray.Add(FARPG_CombatData());
-			}
-		}
-		else
-		{
-			// 무기 데이터를 찾지 못한 경우
-			UE_LOG(LogTemp, Warning, TEXT("Weapon data for row %s not found"), *RowName);
-		}
-	}
-	SetWeapon(0);
 }
 
 void AARPG_Character::PostInitializeComponents()
@@ -228,8 +173,11 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 				FVector DirectionToTarget = EventInstigator->GetPawn()->GetActorLocation() - GetActorLocation();
 				DirectionToTarget.Z = 0;
 
-				const FRotator TargetRotation = DirectionToTarget.Rotation();
-				SetActorRotation(TargetRotation);
+				if(MeleeCombatComponent->IsMontagePlaying())
+				{
+					const FRotator TargetRotation = DirectionToTarget.Rotation();
+					SetActorRotation(TargetRotation);
+				}				
 
 				const FVector ParticleLocation = PointDamageEvent.HitInfo.Location + (GetActorForwardVector() * 50.f);
 				UGameplayStatics::SpawnEmitterAtLocation(
@@ -277,7 +225,6 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 void AARPG_Character::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	//ParkourScanner();
 }
 
 void AARPG_Character::ParkourScanner()
@@ -348,9 +295,23 @@ void AARPG_Character::SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinis
 void AARPG_Character::SetCharacterKey(const FName InCharacterKey)
 {
 	CharacterKey = InCharacterKey;
-	if(MeleeCombatComponent)
+	GameInstance->TryGetMontageData(CharacterKey.ToString(), MontageData);
+	if(GameInstance->TryGetCombatData(CharacterKey.ToString(), CombatData))
 	{
-		GameInstance->TryGetMontageData(CharacterKey.ToString(), MontageData);
+		MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
+	}
+	if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData("Sword", WeaponData))
+	{
+		MainWeapon = CreateWeapon(WeaponData.WeaponClass);
+		MainWeapon->SetActorHiddenInGame(false);
+		WeaponAttach("Sword_Attach");
+	}
+	if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData("Bow", WeaponData))
+	{
+		BowWeapon = CreateWeapon(WeaponData.WeaponClass);
+		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+		BowWeapon->AttachToComponent(GetMesh(), AttachmentRules, "Bow_Grip");
+		BowWeapon->SetActorHiddenInGame(true);
 	}
 }
 
@@ -390,6 +351,8 @@ void AARPG_Character::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+
+	BowAimingPitch = GetBaseAimRotation().Pitch;
 }
 
 void AARPG_Character::InputAttack(const FInputActionValue& Value)
@@ -402,10 +365,12 @@ void AARPG_Character::InputAttack(const FInputActionValue& Value)
 			return;
 		}
 
-		if (bEquipping)
+		if(bIsMainWeaponGrip == false)
 		{
-			return;
+			bIsMainWeaponGrip = true;
+			WeaponAttach("Sword_Grip");
 		}
+		
 
 		if (bCanFinishAttack)
 		{
@@ -437,19 +402,8 @@ void AARPG_Character::InputAttack(const FInputActionValue& Value)
 	{
 		if(bIsBowDrawing)
 		{
-			// 사격!
 			bIsBowDrawing = false;
-
-			// 스폰 파라미터 설정
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;  // 스폰한 액터의 소유자 설정
-			SpawnParams.Instigator = GetInstigator();  // 인스티게이터 설정 (공격자나 원인을 의미)
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;  // 충돌 처리 방식 설정
-			FVector Location = ArrowPos->GetComponentLocation() + GetActorForwardVector() * 50.f;
-			AARPG_WeaponBase* Arrow = GetWorld()->SpawnActor<AARPG_WeaponBase>(ArrowClass, Location, ArrowPos->GetComponentRotation(), SpawnParams);
-			Arrow->AttackCheckBegin();
-
-			
+			ShootArrow();
 		}
 	}
 	
@@ -457,7 +411,7 @@ void AARPG_Character::InputAttack(const FInputActionValue& Value)
 
 void AARPG_Character::HeavyAttackStart()
 {
-	if (bEquipping)
+	if (bIsMainWeaponGrip == false)
 	{
 		return;
 	}
@@ -465,41 +419,58 @@ void AARPG_Character::HeavyAttackStart()
 	{
 		SetActorRotation(DirectionRotator);
 	}
-	MeleeCombatComponent->HeavyAttack(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
+	MeleeCombatComponent->HeavyAttack(CombatData.HeavyAttackMontage);
 }
 
 void AARPG_Character::HeavyAttackCompleted()
 {
-	if (bEquipping)
+	if (bIsMainWeaponGrip == false)
 	{
 		return;
 	}
-	if(CombatDataArray[CurrentWeaponIndex].bChargedAttack)
+	if(CombatData.bChargedAttack)
 	{
-		MeleeCombatComponent->HeavyAttackComplete(CombatDataArray[CurrentWeaponIndex].HeavyAttackMontage);
+		MeleeCombatComponent->HeavyAttackComplete(CombatData.HeavyAttackMontage);
 	}
 }
 
 void AARPG_Character::InputWeaponChange(const FInputActionValue& Value)
 {
-	SetWeapon(CurrentWeaponIndex + 1);
+	if (MeleeCombatComponent->IsMontagePlaying())
+	{
+		return;
+	}
+	if(Value.Get<bool>() == false)
+	{
+		bIsMainWeaponGrip = !bIsMainWeaponGrip;
+	}
+	
 }
 
 void AARPG_Character::InputRoll(const FInputActionValue& Value)
 {
+	if (MeleeCombatComponent->IsMontagePlaying())
+	{
+		return;
+	}
 	bRolling = Value.Get<bool>();
 	if(bRolling)
 	{
 		SetActorRotation(DirectionRotator);
-		PlayAnimMontage(CombatDataArray[CurrentWeaponIndex].RollMontage);
+		PlayAnimMontage(CombatData.RollMontage);
 		LaunchCharacter(GetActorForwardVector() * 1000.f, false, false);
 	}
 }
 
 void AARPG_Character::InputDefense(const FInputActionValue& Value)
 {
+	
 	if(Value.Get<bool>())
 	{
+		if (MeleeCombatComponent->IsMontagePlaying())
+		{
+			return;
+		}
 		MeleeCombatComponent->Defense();
 	}
 	else
@@ -532,10 +503,11 @@ void AARPG_Character::InputParkour(const FInputActionValue& Value)
 void AARPG_Character::InputBowMode(const FInputActionValue& Value)
 {
 	bIsBowMode = Value.Get<bool>();
-	if (CurrentWeapon != nullptr)
+	OnChangedBowAimMode.Broadcast(bIsBowMode);
+	if (MainWeapon != nullptr)
 	{
 		
-		CurrentWeapon->SetActorHiddenInGame(bIsBowMode);
+		MainWeapon->SetActorHiddenInGame(bIsBowMode);
 	}
 	if(BowWeapon != nullptr)
 	{
@@ -550,48 +522,65 @@ void AARPG_Character::InputBowMode(const FInputActionValue& Value)
 	{
 		CameraComponent->OriginCameraMove();
 	}
-	/*CameraBoom->TargetArmLength = bIsBowMode ? 400.0f : 250.f;
-	CameraBoom->bEnableCameraLag = bIsBowMode == false;
-	CameraBoom->SocketOffset = bIsBowMode ? FVector(100, 100	, 100) : FVector(0, 0, 130);
-	FollowCamera->FieldOfView = bIsBowMode ? 45 : 90;*/
 	GetCharacterMovement()->bUseControllerDesiredRotation = bIsBowMode;
 	GetCharacterMovement()->bOrientRotationToMovement = bIsBowMode == false;
 	GetCharacterMovement()->MaxWalkSpeed = bIsBowMode ? 250 : 500;
 	
 }
 
-void AARPG_Character::SetWeapon(int NextWeaponIndex)
+bool AARPG_Character::IsMainWeaponGrip() const
 {
-	
-	if(AnimInstance == nullptr)
+	return bIsMainWeaponGrip;
+}
+
+void AARPG_Character::PressBowDrawing()
+{
+}
+
+FVector AARPG_Character::GetAimLocation() const
+{
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	const FVector TraceStart = CameraLocation;
+	const FVector TraceEnd = TraceStart + (CameraRotation.Vector() * 10000.0f);
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, Params);
+
+	if (HitResult.bBlockingHit)
 	{
-		return;
+		return HitResult.ImpactPoint;
 	}
-	if(MeleeCombatComponent->GetMontagePlaying())
+	else
 	{
-		return;
+		return TraceEnd;
 	}
-	if(CombatDataArray.Num() == 0)
+}
+
+void AARPG_Character::ShootArrow()
+{
+	const FVector BowSocketLocation = ArrowPos->GetComponentLocation();
+	const FVector AimLocation = GetAimLocation();
+	const FVector AimDirection = (AimLocation - BowSocketLocation).GetSafeNormal();
+
+	if (ArrowClass)
 	{
-		return;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		if (AARPG_Projectile* Arrow = GetWorld()->SpawnActor<AARPG_Projectile>(ArrowClass, BowSocketLocation, AimDirection.Rotation(), SpawnParams); Arrow && Arrow->ProjectileMovementComponent)
+		{
+			Arrow->ProjectileMovementComponent->Velocity = AimDirection * Arrow->ProjectileMovementComponent->InitialSpeed;
+			Arrow->AttackCheckBegin();
+		}
 	}
-
-	AnimInstance->EquipWeaponTrigger();
-	NextWeaponIndex = NextWeaponIndex < EquipWeaponArray.Num() ? NextWeaponIndex : 0;
-	CurrentWeaponIndex = NextWeaponIndex;
-	FARPG_CombatData CombatData = CombatDataArray[CurrentWeaponIndex];
-	const int CombatPoseIndex = CombatData.CombatPoseIndex;
-	MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
-
-	AnimInstance->SetEquipWeaponIndex(CombatPoseIndex);
-
-	if(CurrentWeapon != nullptr)
-	{
-		CurrentWeapon->SetActorHiddenInGame(true);
-	}	
-	CurrentWeapon = EquipWeaponArray[CurrentWeaponIndex];
-
-	bEquipping = true;
 }
 
 bool AARPG_Character::IsRolling() const
@@ -613,28 +602,18 @@ bool AARPG_Character::IsKnockBack() const
 	return bIsKnockBack;
 }
 
-AARPG_WeaponBase* AARPG_Character::CreateWeapon(TSubclassOf<AARPG_WeaponBase> InWeaponBase)
+AARPG_WeaponBase* AARPG_Character::CreateWeapon(const TSubclassOf<AARPG_WeaponBase>& InWeaponBase)
 {
-	{
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			// 스폰 파라미터 설정
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;  // 스폰한 액터의 소유자 설정
-			SpawnParams.Instigator = GetInstigator();  // 인스티게이터 설정 (공격자나 원인을 의미)
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;  // 충돌 처리 방식 설정
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-			// 액터 스폰
-			if (AARPG_WeaponBase* SpawnedActor = World->SpawnActor<AARPG_WeaponBase>(InWeaponBase, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams))
-			{
-				SpawnedActor->SetActorHiddenInGame(true);
-				return SpawnedActor;
-			}
-			
-		}
-		return nullptr;
+	if (AARPG_WeaponBase* SpawnedActor = GetWorld()->SpawnActor<AARPG_WeaponBase>(InWeaponBase, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams))
+	{
+		return SpawnedActor;
 	}
+	return nullptr;
 }
 
 void AARPG_Character::SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage)
@@ -644,25 +623,24 @@ void AARPG_Character::SetNextCombo_Implementation(const UAnimMontage* NewNextCom
 
 void AARPG_Character::AttackCheckBegin_Implementation()
 {
-	if(CurrentWeapon != nullptr)
+	if(MainWeapon != nullptr)
 	{
-		CurrentWeapon->AttackCheckBegin();
+		MainWeapon->AttackCheckBegin();
 	}
 }
 
 void AARPG_Character::AttackCheckEnd_Implementation()
 {
-	if (CurrentWeapon != nullptr)
+	if (MainWeapon != nullptr)
 	{
-		CurrentWeapon->AttackCheckEnd();
+		MainWeapon->AttackCheckEnd();
 	}
 }
 
-void AARPG_Character::WeaponAttach_Implementation(const FName AttachSocketName)
+void AARPG_Character::WeaponAttach(const FName AttachSocketName)
 {
 	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-	CurrentWeapon->AttachToComponent(GetMesh(), AttachmentRules, AttachSocketName);
-	CurrentWeapon->SetActorHiddenInGame(false);
+	MainWeapon->AttachToComponent(GetMesh(), AttachmentRules, AttachSocketName);
 }
 
 void AARPG_Character::ParryingReaction()
@@ -692,11 +670,8 @@ void AARPG_Character::FinishAttackDeath()
 
 void AARPG_Character::OnDeath()
 {
-	UKismetSystemLibrary::PrintString(GetWorld(), TEXT("Death"));
-
 	if(IsPlayerControlled() == false)
 	{
-		
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetMesh()->SetAllBodiesSimulatePhysics(true);
 		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
@@ -716,7 +691,6 @@ void AARPG_Character::OnFinishAttackOverlapBegin(UPrimitiveComponent* Overlapped
 	{
 		if(AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
 		{
-			//UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapBegin");
 			Character->SetCanFinishAttack(true, this);
 		}
 	}
@@ -729,16 +703,7 @@ void AARPG_Character::OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedCo
 	{
 		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
 		{
-			//UKismetSystemLibrary::PrintString(GetWorld(), "OnFinishAttackOverlapEnd");
 			Character->SetCanFinishAttack(false, nullptr);
 		}
 	}
-}
-
-
-void AARPG_Character::WeaponEquip_Implementation(const bool InEquipping)
-{
-	bEquipping = InEquipping;
-	
-	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Change bEquipping: %s"), bEquipping ? TEXT("true") : TEXT("false")));
 }

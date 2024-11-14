@@ -15,6 +15,11 @@ AARPG_PlayerController::AARPG_PlayerController()
 	{
 		HudWidgetClass = Widget.Class;
 	}
+
+	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/ARPG/Blueprints/UI/WB_Aim.WB_Aim_C'")); Widget.Succeeded())
+	{
+		AimWidgetClass = Widget.Class;
+	}
 	
 }
 
@@ -62,6 +67,27 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		{
 			MainWidget->AddToViewport(); // 위젯을 화면에 추가
 			MainWidget->SetBind(ARPG_Character);
+		}
+	}
+
+	if(AimWidgetClass)
+	{
+		AimWidget = CreateWidget<UUserWidget>(GetWorld(), AimWidgetClass);
+		if(AimWidget)
+		{
+			AimWidget->AddToViewport();
+			AimWidget->SetVisibility(ESlateVisibility::Hidden);
+			ARPG_Character->OnChangedBowAimMode.AddLambda([this](bool bIsAimMode) -> void
+			{
+				if(bIsAimMode)
+				{
+					AimWidget->SetVisibility(ESlateVisibility::Visible);
+				}
+				else
+				{
+					AimWidget->SetVisibility(ESlateVisibility::Hidden);
+				}
+			});
 		}
 	}
 }

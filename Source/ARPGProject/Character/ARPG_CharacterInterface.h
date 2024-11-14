@@ -34,13 +34,7 @@ public:
 	void AttackCheckEnd();
 	virtual void AttackCheckEnd_Implementation() = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void WeaponAttach(const FName AttachSocketName);
-	virtual void WeaponAttach_Implementation(const FName AttachSocketName) = 0;
-
-	UFUNCTION(BlueprintNativeEvent)
-	void WeaponEquip(const bool InEquipping);
-	virtual void WeaponEquip_Implementation(const bool InEquipping) = 0;
+	virtual void WeaponAttach(const FName AttachSocketName) = 0;
 
 	virtual void ParryingReaction() = 0;
 

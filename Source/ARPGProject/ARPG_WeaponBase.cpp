@@ -3,10 +3,7 @@
 
 #include "ARPG_WeaponBase.h"
 
-#include "KismetTraceUtils.h"
-#include "Character/ARPG_CharacterInterface.h"
 #include "Engine/DamageEvents.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
 
 // Sets default values

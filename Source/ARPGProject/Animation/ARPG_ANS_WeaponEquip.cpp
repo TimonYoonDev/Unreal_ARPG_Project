@@ -14,12 +14,6 @@ void UARPG_ANS_WeaponEquip::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimS
 	{
 		return;
 	}
-
-	if (Owner->Implements<UARPG_CharacterInterface>())
-	{
-		IARPG_CharacterInterface::Execute_WeaponEquip(Owner, true);
-		UKismetSystemLibrary::PrintString(GetWorld(), "Equip Begin");
-	}
 }
 
 void UARPG_ANS_WeaponEquip::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
@@ -28,11 +22,5 @@ void UARPG_ANS_WeaponEquip::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeq
 	if (Owner == nullptr)
 	{
 		return;
-	}
-
-	if (Owner->Implements<UARPG_CharacterInterface>())
-	{
-		IARPG_CharacterInterface::Execute_WeaponEquip(Owner, false);
-		UKismetSystemLibrary::PrintString(GetWorld(),"Equip End");
 	}
 }

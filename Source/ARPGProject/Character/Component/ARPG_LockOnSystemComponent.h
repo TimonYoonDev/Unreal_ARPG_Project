@@ -36,6 +36,7 @@ private:
 	float MaxLockOnAngle = 90.f;
 
 public:
+	AActor* FindForwardClosestTarget() const;
 	AActor* FindClosestTarget() const;
 	void SetTarget(AActor* NewTargetActor);
 	void SetMovementLockOnTarget() const;

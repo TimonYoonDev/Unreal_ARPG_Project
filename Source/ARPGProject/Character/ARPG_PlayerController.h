@@ -57,6 +57,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	UARPG_MainWidget* MainWidget;
 
+	TSubclassOf<UUserWidget> AimWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
+	UUserWidget* AimWidget;
 
 
 protected:

@@ -3,15 +3,19 @@
 
 #include "ARPG_BTT_Chase.h"
 
-#include "AIController.h"
 #include "ARPGProject/Character/ARPG_AICharacterInterface.h"
+#include "ARPGProject/Character/ARPG_EnemyCharacter.h"
 
 EBTNodeResult::Type UARPG_BTT_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
-	UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), TEXT("ARPG_BTT_Chase"), *OwnerActor->GetActorNameOrLabel());
 	if(AICharacterInterface)
 	{
+		if (AARPG_EnemyCharacter* Character = Cast<AARPG_EnemyCharacter>(OwnerActor); Character != nullptr)
+		{
+			Character->WeaponGrip();
+		}
+
 		AICharacterInterface->Execute_SetWalkSpeed(AICharacterInterface.GetObject(), Speed);
 		Result = EBTNodeResult::Succeeded;
 	}

@@ -15,10 +15,10 @@ class ARPGPROJECT_API UARPG_AnimInstance : public UAnimInstance
 
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	bool bExecuteNextFrame = false;
+	void NativeLateUpdateAnimation();
 
 public:
-	void EquipWeaponTrigger();
-	void SetEquipWeaponIndex(int InWeaponIndex);
 	void HitTrigger(float InHitAngle);
 
 
@@ -35,18 +35,16 @@ private:
 	float GroundSpeed;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	bool ShouldMove;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	bool IsFalling;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	float DirectionAngle;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
-	bool bEquipWeapon;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
-	float EquipTime;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
-	int EquipWeaponIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
+	bool bIsMainWeaponGrip;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
+	bool bIsCurrentMainWeaponGrip;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Hit, meta = (AllowPrivateAccess = true))
 	bool bHit;
@@ -64,5 +62,8 @@ private:
 	bool IsBowMode;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	bool IsBowDrawing;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	float BowAimingPitch;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	float BowAimingAlpha;
 };

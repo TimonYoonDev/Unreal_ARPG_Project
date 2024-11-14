@@ -33,7 +33,7 @@ void UARPG_LockOnSystemComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	{
 		if (TargetCharacter->GetAttributeComponent()->IsDeath())
 		{
-			SetTarget(nullptr);
+			SetTarget(FindClosestTarget());
 			return;
 		}
 		const FRotator CurrentRot = OwnerCharacter->GetActorRotation();// GetControlRotation();
@@ -57,7 +57,7 @@ void UARPG_LockOnSystemComponent::InputTargetLockOn()
 	}
 
 
-	SetTarget(FindClosestTarget());
+	SetTarget(FindForwardClosestTarget());
 }
 
 bool UARPG_LockOnSystemComponent::IsLockOnTarget() const
@@ -65,7 +65,7 @@ bool UARPG_LockOnSystemComponent::IsLockOnTarget() const
 	return TargetCharacter ? true : false;
 }
 
-AActor* UARPG_LockOnSystemComponent::FindClosestTarget() const
+AActor* UARPG_LockOnSystemComponent::FindForwardClosestTarget() const
 {
 	if (OwnerCharacter == nullptr)
 	{
@@ -84,7 +84,7 @@ AActor* UARPG_LockOnSystemComponent::FindClosestTarget() const
 	FVector ForwardVector = OwnerCharacter->GetController()->GetControlRotation().Vector();
 	if (TArray<FHitResult> HitResults; GetWorld()->SweepMultiByObjectType(HitResults, StartPos, StartPos, FQuat::Identity, COQP, CS, CQP))
 	{
-		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("FindClosestTarget"));
+		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("FindForwardClosestTarget"));
 		for (auto HitResult : HitResults)
 		{
 			FVector DirectionToEnemy = HitResult.GetActor()->GetActorLocation() - StartPos;
@@ -97,6 +97,50 @@ AActor* UARPG_LockOnSystemComponent::FindClosestTarget() const
 				continue;
 			}
 
+			FVector EndPos = StartPos + DirectionToEnemy * ClosestDistance;
+
+			DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
+
+			if (FHitResult LineTraceHitResult; GetWorld()->LineTraceSingleByChannel(LineTraceHitResult, StartPos, EndPos, ECC_Pawn, CQP))
+			{
+				if (HitResult.GetActor() == LineTraceHitResult.GetActor())
+				{
+					if (DistanceToEnemy < ClosestDistance)
+					{
+						ClosestTarget = HitResult.GetActor();
+						ClosestDistance = DistanceToEnemy;
+					}
+				}
+			}
+		}
+	}
+	return ClosestTarget;
+}
+
+AActor* UARPG_LockOnSystemComponent::FindClosestTarget() const
+{
+	if (OwnerCharacter == nullptr)
+	{
+		return nullptr;
+	}
+	const FVector StartPos = OwnerCharacter->GetActorLocation();
+	FCollisionObjectQueryParams COQP;
+	COQP.AddObjectTypesToQuery(ECC_Pawn);
+	FCollisionShape CS;
+	CS.SetSphere(SphereRadius);
+	FCollisionQueryParams CQP;
+	CQP.AddIgnoredActor(GetOwner());
+
+	TObjectPtr<AActor> ClosestTarget = nullptr;
+	float ClosestDistance = SphereRadius;
+	if (TArray<FHitResult> HitResults; GetWorld()->SweepMultiByObjectType(HitResults, StartPos, StartPos, FQuat::Identity, COQP, CS, CQP))
+	{
+		for (auto HitResult : HitResults)
+		{
+			FVector DirectionToEnemy = HitResult.GetActor()->GetActorLocation() - StartPos;
+			const float DistanceToEnemy = DirectionToEnemy.Size();
+			DirectionToEnemy.Normalize();
+			
 			FVector EndPos = StartPos + DirectionToEnemy * ClosestDistance;
 
 			DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
