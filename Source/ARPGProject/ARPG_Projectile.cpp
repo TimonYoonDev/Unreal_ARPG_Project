@@ -3,19 +3,21 @@
 
 #include "ARPG_Projectile.h"
 
+#include "Character/ARPG_Character.h"
 #include "Engine/DamageEvents.h"
 #include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AARPG_Projectile::AARPG_Projectile()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SceneComponent = CreateDefaultSubobject<USceneComponent>("Pivot");
-	SceneComponent->SetupAttachment(RootComponent);
+	SphereComponent = CreateDefaultSubobject<USphereComponent>("Pivot");
+	SphereComponent->SetupAttachment(RootComponent);
+	
+
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
-	StaticMeshComponent->SetupAttachment(SceneComponent);
+	StaticMeshComponent->SetupAttachment(SphereComponent);
 
 	if (StaticMesh)
 	{
@@ -44,7 +46,6 @@ void AARPG_Projectile::AttackCheckBegin()
 void AARPG_Projectile::AttackCheckEnd()
 {
 	IsAttackCheck = false;
-	TargetSet.Empty();
 	ParticleSystem->EndTrails();
 }
 
@@ -56,33 +57,38 @@ void AARPG_Projectile::BeginPlay()
 
 void AARPG_Projectile::AttackTrace()
 {
-	TArray<FHitResult> OutHits;
+	FHitResult OutHit;
 	const FVector BeginSocketLocation = StaticMeshComponent->GetSocketLocation(FName("B"));
 	const FVector EndSocketLocation = StaticMeshComponent->GetSocketLocation(FName("E"));
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetOwner());
 
-	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, ECollisionChannel::ECC_Pawn, FCollisionShape::MakeSphere(12.f), QueryParams);
+	FCollisionObjectQueryParams COQP;
+	COQP.AddObjectTypesToQuery(ECC_Pawn);
+	COQP.AddObjectTypesToQuery(ECC_WorldStatic);
+	GetWorld()->SweepSingleByObjectType(OutHit, BeginSocketLocation, EndSocketLocation, FQuat::Identity, COQP, FCollisionShape::MakeSphere(12.f), QueryParams);
 
 	FName TargetTag = GetOwner()->ActorHasTag("Player") ? "Enemy" : "Player";
 
-	for (auto OutHit : OutHits)
+	if(OutHit.bBlockingHit)
 	{
-		auto StatID = OutHit.GetActor()->GetFNameForStatID();
-		if (TargetSet.Contains(StatID.ToString()))
-		{
-			continue;
-		}
-		TargetSet.Add(StatID.ToString());
-
+		ProjectileMovementComponent->SetActive(false);
 		if (OutHit.GetActor()->ActorHasTag(TargetTag))
 		{
 			FPointDamageEvent DamageEventBase;
 			DamageEventBase.HitInfo = OutHit;
 			FString HitActorName = OutHit.GetActor()->GetName();
 
+			AARPG_Character* Character = Cast<AARPG_Character>(OutHit.GetActor());
+			FName BoneName = Character->GetMesh()->FindClosestBone(OutHit.Location);
+			const FAttachmentTransformRules AttachmentRules(
+				EAttachmentRule::SnapToTarget, 
+				EAttachmentRule::KeepWorld, 
+				EAttachmentRule::KeepWorld, true);
+			this->AttachToComponent(Character->GetMesh(), AttachmentRules, BoneName);
 			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}
+		AttackCheckEnd();
 	}
 
 	//#if ENABLE_DRAW_DEBUG

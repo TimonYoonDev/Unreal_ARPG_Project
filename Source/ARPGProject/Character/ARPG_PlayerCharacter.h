@@ -17,4 +17,8 @@ class ARPGPROJECT_API AARPG_PlayerCharacter : public AARPG_Character
 
 public:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+
+private:
+	void InteractWithObject();
 };

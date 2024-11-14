@@ -298,7 +298,11 @@ void AARPG_Character::SetCharacterKey(const FName InCharacterKey)
 	GameInstance->TryGetMontageData(CharacterKey.ToString(), MontageData);
 	if(GameInstance->TryGetCombatData(CharacterKey.ToString(), CombatData))
 	{
-		MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
+		if(MeleeCombatComponent != nullptr)
+		{
+			MeleeCombatComponent->SetStartComboMontage(CombatData.AttackMontage);
+		}
+		
 	}
 	if (FARPG_WeaponData WeaponData; GameInstance->TryGetWeaponData("Sword", WeaponData))
 	{
@@ -574,7 +578,7 @@ void AARPG_Character::ShootArrow()
 		SpawnParams.Owner = this;
 		SpawnParams.Instigator = GetInstigator();
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
+		
 		if (AARPG_Projectile* Arrow = GetWorld()->SpawnActor<AARPG_Projectile>(ArrowClass, BowSocketLocation, AimDirection.Rotation(), SpawnParams); Arrow && Arrow->ProjectileMovementComponent)
 		{
 			Arrow->ProjectileMovementComponent->Velocity = AimDirection * Arrow->ProjectileMovementComponent->InitialSpeed;

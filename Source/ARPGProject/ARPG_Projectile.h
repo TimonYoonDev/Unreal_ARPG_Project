@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "ARPG_Projectile.generated.h"
@@ -33,8 +34,8 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = true))
-	USceneComponent* SceneComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = true))
+	USphereComponent* SphereComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = true))
 	UStaticMeshComponent* StaticMeshComponent;
@@ -46,7 +47,6 @@ private:
 	UParticleSystemComponent* ParticleSystem;
 
 	bool IsAttackCheck;
-	TSet<FString> TargetSet;
 	void AttackTrace();
 
 };
