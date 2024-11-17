@@ -11,25 +11,25 @@ EBTNodeResult::Type UARPG_BTT_Base::ExecuteTask(UBehaviorTreeComponent& OwnerCom
 	EBTNodeResult::Type Result = EBTNodeResult::Failed;
 	//if (AICharacterInterface == nullptr)
 	{
-		const AAIController* AIController = OwnerComp.GetAIOwner();
+		OwnerController = OwnerComp.GetAIOwner();
 
-		if (AIController == nullptr)
+		if (OwnerController == nullptr)
 		{
 			return Result;
 		}
 
-		OwnerActor = AIController->GetPawn();
-		if (OwnerActor == nullptr)
+		ControlledPawn = OwnerController->GetPawn();
+		if (ControlledPawn == nullptr)
 		{
 			return Result;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), *AIController->GetActorNameOrLabel(), *OwnerActor->GetActorNameOrLabel());
+		/*UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), *OwnerController->GetActorNameOrLabel(), *ControlledPawn->GetActorNameOrLabel());*/
 
-		if (OwnerActor->Implements<UARPG_AICharacterInterface>())
+		if (ControlledPawn->Implements<UARPG_AICharacterInterface>())
 		{
-			AICharacterInterface.SetObject(OwnerActor);
-			AICharacterInterface.SetInterface(Cast<IARPG_AICharacterInterface>(OwnerActor));
+			AICharacterInterface.SetObject(ControlledPawn);
+			AICharacterInterface.SetInterface(Cast<IARPG_AICharacterInterface>(ControlledPawn));
 			Result = EBTNodeResult::Succeeded;
 		}
 

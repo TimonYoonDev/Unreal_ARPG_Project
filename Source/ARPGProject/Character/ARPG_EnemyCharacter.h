@@ -31,7 +31,8 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void SetLockOnWidget(const bool bShowWidget);
-	virtual void SetWalkSpeed_Implementation(const float InSpeed) override;
+	virtual void SetWalkSpeed(const float InSpeed) override;
+	virtual void SetDefence(bool bIsDefence) override;
 
 	void WeaponGrip();
 

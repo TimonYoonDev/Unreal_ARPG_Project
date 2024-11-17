@@ -11,12 +11,12 @@ EBTNodeResult::Type UARPG_BTT_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerCo
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 	if(AICharacterInterface)
 	{
-		if (AARPG_EnemyCharacter* Character = Cast<AARPG_EnemyCharacter>(OwnerActor); Character != nullptr)
+		if (AARPG_EnemyCharacter* Character = Cast<AARPG_EnemyCharacter>(ControlledPawn); Character != nullptr)
 		{
 			Character->WeaponGrip();
 		}
 
-		AICharacterInterface->Execute_SetWalkSpeed(AICharacterInterface.GetObject(), Speed);
+		AICharacterInterface->SetWalkSpeed(Speed);
 		Result = EBTNodeResult::Succeeded;
 	}
 	return Result;

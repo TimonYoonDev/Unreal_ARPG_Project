@@ -26,11 +26,6 @@ AARPG_EnemyCharacter::AARPG_EnemyCharacter()
 	LockOnWidgetComponent->SetDrawSize(FVector2D(40, 40));
 }
 
-void AARPG_EnemyCharacter::SetWalkSpeed_Implementation(const float InSpeed)
-{
-	GetCharacterMovement()->MaxWalkSpeed = InSpeed;
-}
-
 void AARPG_EnemyCharacter::WeaponGrip()
 {
 	bIsMainWeaponGrip = true;
@@ -76,8 +71,26 @@ void AARPG_EnemyCharacter::SetLockOnWidget(const bool bShowWidget)
 	LockOnWidgetComponent->SetVisibility(bShowWidget);
 }
 
+void AARPG_EnemyCharacter::SetWalkSpeed(const float InSpeed)
+{
+	GetCharacterMovement()->MaxWalkSpeed = InSpeed;
+}
+
+void AARPG_EnemyCharacter::SetDefence(const bool bIsDefence)
+{
+	if(bIsDefence)
+	{
+		GetMeleeCombatComponent()->Defense();
+	}
+	else
+	{
+		GetMeleeCombatComponent()->DefenseComplete();
+	}
+	
+}
+
 float AARPG_EnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
+                                       AController* EventInstigator, AActor* DamageCauser)
 {
 	const float ResultDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	AARPG_EnemyCharacter::UpdateHealthBar();

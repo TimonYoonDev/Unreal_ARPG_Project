@@ -20,6 +20,7 @@ public:
 	void RunAI();
 	void StopAI() const;
 
+	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 
 	static const FName PatrolLocationKey;
@@ -29,6 +30,9 @@ public:
 	UAIPerceptionComponent* AIPerceptionComponent;
 	UPROPERTY(EditDefaultsOnly, Category = "Perception")
 	UAISenseConfig_Sight* SightConfig;
+
+	UPROPERTY(BlueprintReadOnly)
+	AActor* AttackTarget;
 private:
 
 	TObjectPtr<UBehaviorTree> BehaviorTree;

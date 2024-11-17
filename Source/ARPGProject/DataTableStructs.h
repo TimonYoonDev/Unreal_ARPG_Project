@@ -54,6 +54,8 @@ struct FARPG_CharacterData: public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int32 Damage;
 
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UBehaviorTree> BehaviorTree;
 
 	//피격
 	//리액션 시트

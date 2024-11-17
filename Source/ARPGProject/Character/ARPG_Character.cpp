@@ -170,14 +170,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 			UKismetSystemLibrary::PrintString(GetWorld(), *PointDamageEvent.HitInfo.Location.ToString());
 			if (MeleeCombatComponent->IsDefense())
 			{
-				FVector DirectionToTarget = EventInstigator->GetPawn()->GetActorLocation() - GetActorLocation();
-				DirectionToTarget.Z = 0;
-
-				if(MeleeCombatComponent->IsMontagePlaying())
-				{
-					const FRotator TargetRotation = DirectionToTarget.Rotation();
-					SetActorRotation(TargetRotation);
-				}				
+				LockOnSystemComponent->SetTarget(EventInstigator->GetPawn());
 
 				const FVector ParticleLocation = PointDamageEvent.HitInfo.Location + (GetActorForwardVector() * 50.f);
 				UGameplayStatics::SpawnEmitterAtLocation(

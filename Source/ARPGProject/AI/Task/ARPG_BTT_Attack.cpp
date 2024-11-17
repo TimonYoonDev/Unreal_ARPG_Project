@@ -16,7 +16,7 @@ EBTNodeResult::Type UARPG_BTT_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 	Result = EBTNodeResult::InProgress;
-	if (const AARPG_Character* Character = Cast<AARPG_Character>(OwnerActor); Character != nullptr)
+	if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character != nullptr)
 	{
 		IsAttacking = true;
 		Character->GetMeleeCombatComponent()->OnAttackEndDelegate.Remove(OnAttackEndDelegateHandle);

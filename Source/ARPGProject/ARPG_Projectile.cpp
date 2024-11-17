@@ -91,10 +91,6 @@ void AARPG_Projectile::AttackTrace()
 		AttackCheckEnd();
 	}
 
-	//#if ENABLE_DRAW_DEBUG
-	//	const FColor DrawColor = bHitCheck ? FColor::Green : FColor::Red;
-	//	DrawDebugSweptSphere(GetWorld(), BeginSocketLocation, EndSocketLocation, 20.f, DrawColor, false, 1.f);
-	//#endif
 }
 // Called every frame
 void AARPG_Projectile::Tick(float DeltaTime)

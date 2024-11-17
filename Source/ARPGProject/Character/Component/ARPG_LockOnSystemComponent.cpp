@@ -165,15 +165,15 @@ void UARPG_LockOnSystemComponent::SetTarget(AActor* NewTargetActor)
 {
 	if (TargetCharacter)
 	{
-		TargetCharacter->SetLockOnWidget(false);
+		//TargetCharacter->SetLockOnWidget(false);
 	}
 
 	if (NewTargetActor != nullptr)
 	{
-		TargetCharacter = Cast<AARPG_EnemyCharacter>(NewTargetActor);
+		TargetCharacter = Cast<AARPG_Character>(NewTargetActor);
 		if (TargetCharacter)
 		{
-			TargetCharacter->SetLockOnWidget(true);
+			//TargetCharacter->SetLockOnWidget(true);
 		}
 	}
 	else

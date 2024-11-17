@@ -18,6 +18,9 @@ class ARPGPROJECT_API UARPG_BTT_Base : public UBTTaskNode
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-	TObjectPtr<AActor> OwnerActor;
+	UPROPERTY()
+	TObjectPtr<AActor> ControlledPawn;
+	UPROPERTY()
+	TObjectPtr<AAIController> OwnerController;
 	TScriptInterface<IARPG_AICharacterInterface> AICharacterInterface;
 };

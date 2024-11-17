@@ -2,9 +2,10 @@
 
 
 #include "ARPG_AIController.h"
+
+#include "ARPGProject/ARPG_GameInstance.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Perception/AIPerceptionComponent.h"
 
 const FName AARPG_AIController::PatrolLocationKey(TEXT("PatrolLocation"));
@@ -13,7 +14,7 @@ const FName AARPG_AIController::HasLineOfSightKey(TEXT("HasLineOfSight"));
 
 AARPG_AIController::AARPG_AIController()
 {
-	const ConstructorHelpers::FObjectFinder<UBehaviorTree> BT_Enemy(TEXT("/Script/AIModule.BehaviorTree'/Game/ARPG/AI/BT_EnemyBase.BT_EnemyBase'"));
+	const ConstructorHelpers::FObjectFinder<UBehaviorTree> BT_Enemy(TEXT("/Script/AIModule.BehaviorTree'/Game/ARPG/AI/BT_Enemy.BT_Enemy'"));
 	
 	if(BT_Enemy.Succeeded())
 	{
@@ -66,6 +67,18 @@ void AARPG_AIController::StopAI() const
 	}
 }
 
+void AARPG_AIController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UARPG_GameInstance* GameInstance = Cast<UARPG_GameInstance>(GetGameInstance());
+	FARPG_CharacterData CharacterData;
+	if(GameInstance->TryGetCharacterData("Quinn", CharacterData))
+	{
+		BehaviorTree = CharacterData.BehaviorTree;
+	}
+}
+
 void AARPG_AIController::OnPossess(APawn* InPawn)
 {
 	
@@ -87,6 +100,7 @@ void AARPG_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus St
 			// 타겟이 시야에 들어왔을 때의 로직
 			GetBlackboardComponent()->SetValueAsBool(HasLineOfSightKey, true);
 			GetBlackboardComponent()->SetValueAsObject(TargetActorKey, Actor);
+			AttackTarget = Actor;
 			
 		}
 		else if (Stimulus.Type == DamageConfig->GetSenseID())
@@ -95,6 +109,7 @@ void AARPG_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus St
 			// 데미지를 입힌 타겟의 로직
 			GetBlackboardComponent()->SetValueAsBool(HasLineOfSightKey, true);
 			GetBlackboardComponent()->SetValueAsObject(TargetActorKey, Actor);
+			AttackTarget = Actor;
 		}
 	}
 	else
@@ -108,6 +123,7 @@ void AARPG_AIController::OnCleanTarget()
 {
 	GetBlackboardComponent()->SetValueAsBool(HasLineOfSightKey, false);
 	GetBlackboardComponent()->SetValueAsObject(TargetActorKey, nullptr);
+	AttackTarget = nullptr;
 }
 
 
