@@ -17,7 +17,7 @@ class ARPGPROJECT_API AARPG_AIController : public AAIController
 public:
 	AARPG_AIController();
 
-	void RunAI();
+	void RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree);
 	void StopAI() const;
 
 	virtual void BeginPlay() override;
@@ -34,9 +34,6 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	AActor* AttackTarget;
 private:
-
-	TObjectPtr<UBehaviorTree> BehaviorTree;
-	
 
 	
 

@@ -80,13 +80,12 @@ void AARPG_EnemyCharacter::SetDefence(const bool bIsDefence)
 {
 	if(bIsDefence)
 	{
-		GetMeleeCombatComponent()->Defense();
+		GetMeleeCombatComponent()->Guard();
 	}
 	else
 	{
-		GetMeleeCombatComponent()->DefenseComplete();
+		GetMeleeCombatComponent()->GuardComplete();
 	}
-	
 }
 
 float AARPG_EnemyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,

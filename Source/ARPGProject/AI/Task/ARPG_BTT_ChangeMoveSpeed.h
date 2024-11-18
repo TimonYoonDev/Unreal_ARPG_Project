@@ -5,21 +5,19 @@
 #include "CoreMinimal.h"
 #include "ARPG_BTT_Base.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "ARPG_BTT_Chase.generated.h"
+#include "ARPG_BTT_ChangeMoveSpeed.generated.h"
 
 class IARPG_AICharacterInterface;
 /**
  * 
  */
 UCLASS()
-class ARPGPROJECT_API UARPG_BTT_Chase : public UARPG_BTT_Base
+class ARPGPROJECT_API UARPG_BTT_ChangeMoveSpeed : public UARPG_BTT_Base
 {
 	GENERATED_BODY()
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 
-public:
-
-	
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	float Speed;
+
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

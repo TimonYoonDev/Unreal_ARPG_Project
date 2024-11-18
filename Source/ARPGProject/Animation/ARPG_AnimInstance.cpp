@@ -8,6 +8,7 @@
 #include "KismetAnimationLibrary.h"
 #include "AnimNotifies/AnimNotify_PlayMontageNotify.h"
 #include "ARPGProject/Character/ARPG_Character.h"
+#include "ARPGProject/Character/ARPG_PlayerCharacter.h"
 #include "GameFramework/Character.h"
 
 void UARPG_AnimInstance::NativeInitializeAnimation()
@@ -16,6 +17,7 @@ void UARPG_AnimInstance::NativeInitializeAnimation()
 	Character = Cast<AARPG_Character>(GetOwningActor());
 	if (Character == nullptr)
 		return;
+	PlayerCharacter = Cast<AARPG_PlayerCharacter>(GetOwningActor());
 
 	CharacterMovement = Character->GetCharacterMovement();
 }
@@ -42,7 +44,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	IsFalling = CharacterMovement->IsFalling();
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
-	IsDefending = Character->IsDefending();
+	IsGuard = Character->IsGuard();
 	if (Character->GetLockOnSystemComponent())
 	{
 		IsLockOnTarget = Character->GetLockOnSystemComponent()->IsLockOnTarget();
@@ -56,10 +58,14 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	bIsMainWeaponGrip = Character->IsMainWeaponGrip();
 
-	IsBowMode = Character->bIsBowMode;
-	IsBowDrawing = Character->bIsBowDrawing;
-	BowAimingPitch = Character->BowAimingPitch;
-	BowAimingAlpha = IsBowMode ? 1 : 0;
+	if(PlayerCharacter)
+	{
+		IsBowMode = PlayerCharacter->bIsBowMode;
+		IsBowDrawing = PlayerCharacter->bIsBowDrawing;
+		BowAimingPitch = PlayerCharacter->GetBaseAimRotation().Pitch;
+		BowAimingAlpha = IsBowMode ? 1 : 0;
+	}
+	
 }
 
 void UARPG_AnimInstance::NativeLateUpdateAnimation()

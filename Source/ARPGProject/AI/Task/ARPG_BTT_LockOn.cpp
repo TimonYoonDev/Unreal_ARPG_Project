@@ -14,16 +14,27 @@ EBTNodeResult::Type UARPG_BTT_LockOn::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	{
 		return EBTNodeResult::Failed;
 	}
+	if(IsLockOn)
+	{
+		AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName));
+		if (!TargetActor)
+		{
+			return EBTNodeResult::Failed;
+		}
+		if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character)
+		{
+			Character->GetLockOnSystemComponent()->SetTarget(TargetActor);
+		}
+	}
+	else
+	{
+		if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character)
+		{
+			Character->GetLockOnSystemComponent()->SetTarget(nullptr);
+		}
+	}
 
-	AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName));
-	if (!TargetActor)
-	{
-		return EBTNodeResult::Failed;
-	}
-	if(const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character)
-	{
-		Character->GetLockOnSystemComponent()->SetTarget(TargetActor);
-	}
+	
 
 	return Result;
 }

@@ -14,13 +14,6 @@ const FName AARPG_AIController::HasLineOfSightKey(TEXT("HasLineOfSight"));
 
 AARPG_AIController::AARPG_AIController()
 {
-	const ConstructorHelpers::FObjectFinder<UBehaviorTree> BT_Enemy(TEXT("/Script/AIModule.BehaviorTree'/Game/ARPG/AI/BT_Enemy.BT_Enemy'"));
-	
-	if(BT_Enemy.Succeeded())
-	{
-		BehaviorTree = BT_Enemy.Object;
-	}
-
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
 
 	// 시야 감지 설정
@@ -46,14 +39,13 @@ AARPG_AIController::AARPG_AIController()
 	AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AARPG_AIController::OnTargetPerceptionUpdated);
 }
 
-void AARPG_AIController::RunAI()
+void AARPG_AIController::RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree)
 {
-	if(BehaviorTree)
+	if (BehaviorTree)
 	{
 		RunBehaviorTree(BehaviorTree);
 	}
 }
-
 void AARPG_AIController::StopAI() const
 {
 	if(BrainComponent == nullptr)
@@ -70,13 +62,6 @@ void AARPG_AIController::StopAI() const
 void AARPG_AIController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UARPG_GameInstance* GameInstance = Cast<UARPG_GameInstance>(GetGameInstance());
-	FARPG_CharacterData CharacterData;
-	if(GameInstance->TryGetCharacterData("Quinn", CharacterData))
-	{
-		BehaviorTree = CharacterData.BehaviorTree;
-	}
 }
 
 void AARPG_AIController::OnPossess(APawn* InPawn)

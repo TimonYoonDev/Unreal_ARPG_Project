@@ -22,14 +22,14 @@ public:
 	void SetNextCombo(const UAnimMontage* NewNextComboMontage);
 	void SetStartComboMontage(UAnimMontage* InMontage);
 
-	void Defense();
-	void DefenseComplete();
-	bool IsDefense() const;
+	void Guard();
+	void GuardComplete();
+	bool IsGuard() const;
 
 	void ParryStart();
 	void ParryEnd();
 	bool IsParry() const;
-	bool bIsDefense;
+	bool bIsGuard;
 	bool bIsParry;
 	FTimerHandle ParryTimerHandle;
 	float ParryTime = 0.5f;

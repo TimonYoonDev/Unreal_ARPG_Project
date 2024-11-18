@@ -70,7 +70,7 @@ struct FARPG_MontageData: public FTableRowBase
 	TObjectPtr<UAnimMontage> ParryingReactionMontage;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<UAnimMontage> DefenseReactionMontage;
+	TObjectPtr<UAnimMontage> GuardReactionMontage;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TObjectPtr<UAnimMontage> FinishAttackMontage;

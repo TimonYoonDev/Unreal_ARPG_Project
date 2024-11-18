@@ -7,6 +7,7 @@
 #include "ARPG_AnimInstance.generated.h"
 
 class AARPG_Character;
+class AARPG_PlayerCharacter;
 
 UCLASS()
 class ARPGPROJECT_API UARPG_AnimInstance : public UAnimInstance
@@ -25,6 +26,9 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	AARPG_Character* Character;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
+	AARPG_PlayerCharacter* PlayerCharacter;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	UCharacterMovementComponent* CharacterMovement;
@@ -54,7 +58,7 @@ private:
 	float HitAngle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	bool IsDefending;
+	bool IsGuard;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	bool IsLockOnTarget;
 

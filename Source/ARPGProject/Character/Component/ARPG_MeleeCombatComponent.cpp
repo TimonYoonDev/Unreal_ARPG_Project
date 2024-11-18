@@ -70,22 +70,22 @@ void UARPG_MeleeCombatComponent::SetStartComboMontage(UAnimMontage* InMontage)
 	StartComboMontage = InMontage;
 }
 
-void UARPG_MeleeCombatComponent::Defense()
+void UARPG_MeleeCombatComponent::Guard()
 {
-	bIsDefense = true;
+	bIsGuard = true;
 	ParryStart();
 }
 
-void UARPG_MeleeCombatComponent::DefenseComplete()
+void UARPG_MeleeCombatComponent::GuardComplete()
 {
-	bIsDefense = false;
+	bIsGuard = false;
 	bIsParry = false;
 	GetWorld()->GetTimerManager().ClearTimer(ParryTimerHandle);
 }
 
-bool UARPG_MeleeCombatComponent::IsDefense() const
+bool UARPG_MeleeCombatComponent::IsGuard() const
 {
-	return bIsDefense;
+	return bIsGuard;
 }
 
 void UARPG_MeleeCombatComponent::ParryStart()

@@ -9,6 +9,10 @@
 EBTNodeResult::Type UARPG_BTT_FocusTarget::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	const EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
+	if(Result == EBTNodeResult::Failed)
+	{
+		return Result;
+	}
 	const UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{

@@ -72,11 +72,11 @@ void AARPG_AICharacter::SetDefence(const bool bIsDefence)
 {
 	if (bIsDefence)
 	{
-		GetMeleeCombatComponent()->Defense();
+		GetMeleeCombatComponent()->Guard();
 	}
 	else
 	{
-		GetMeleeCombatComponent()->DefenseComplete();
+		GetMeleeCombatComponent()->GuardComplete();
 	}
 }
 

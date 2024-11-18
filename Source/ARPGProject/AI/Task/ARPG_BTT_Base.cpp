@@ -8,31 +8,31 @@
 
 EBTNodeResult::Type UARPG_BTT_Base::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	EBTNodeResult::Type Result = EBTNodeResult::Failed;
-	//if (AICharacterInterface == nullptr)
+	CachedOwnerComp = &OwnerComp;
+
+	OwnerController = OwnerComp.GetAIOwner();
+
+	if (OwnerController == nullptr)
 	{
-		OwnerController = OwnerComp.GetAIOwner();
-
-		if (OwnerController == nullptr)
-		{
-			return Result;
-		}
-
-		ControlledPawn = OwnerController->GetPawn();
-		if (ControlledPawn == nullptr)
-		{
-			return Result;
-		}
-
-		/*UE_LOG(LogTemp, Warning, TEXT("Task : %s / %s"), *OwnerController->GetActorNameOrLabel(), *ControlledPawn->GetActorNameOrLabel());*/
-
-		if (ControlledPawn->Implements<UARPG_AICharacterInterface>())
-		{
-			AICharacterInterface.SetObject(ControlledPawn);
-			AICharacterInterface.SetInterface(Cast<IARPG_AICharacterInterface>(ControlledPawn));
-			Result = EBTNodeResult::Succeeded;
-		}
-
+		return EBTNodeResult::Failed;
 	}
-	return Result;
+
+	ControlledPawn = OwnerController->GetPawn();
+	if (ControlledPawn == nullptr)
+	{
+		return EBTNodeResult::Failed;
+	}
+
+	if(AICharacterInterface)
+	{
+		return EBTNodeResult::Succeeded;
+	}
+
+	if (ControlledPawn->Implements<UARPG_AICharacterInterface>())
+	{
+		AICharacterInterface = Cast<IARPG_AICharacterInterface>(ControlledPawn);
+		return EBTNodeResult::Succeeded;
+	}
+
+	return EBTNodeResult::Failed;
 }

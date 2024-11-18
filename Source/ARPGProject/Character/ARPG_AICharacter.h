@@ -17,14 +17,17 @@ class ARPGPROJECT_API AARPG_AICharacter : public AARPG_Character, public IARPG_A
 
 	AARPG_AICharacter();
 
+
+	bool bIsAttacking;
+	TSet<FString> TargetSet;
+
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	virtual void AttackCheckBegin_Implementation() override;
 	virtual void AttackCheckEnd_Implementation() override;
 
-	bool bIsAttacking;
-	TSet<FString> TargetSet;
-
+	
 	void AttackTrace();
 
 	virtual void SetWalkSpeed(const float InSpeed) override;
