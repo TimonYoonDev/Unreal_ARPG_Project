@@ -4,40 +4,39 @@
 #include "Components/ActorComponent.h"
 #include "ARPG_LockOnSystemComponent.generated.h"
 
-class AARPG_EnemyCharacter;
 class AARPG_Character;
+class AARPG_AICharacter;
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class ARPGPROJECT_API UARPG_LockOnSystemComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
-	UARPG_LockOnSystemComponent();
-
-protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
-
-	void InputTargetLockOn();
-	bool IsLockOnTarget() const;
-
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	AARPG_Character* TargetCharacter;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, Category = "LockOnInfo")
+	AARPG_AICharacter* TargetCharacter;
+	UPROPERTY(VisibleAnywhere, Category = "LockOnInfo")
 	AARPG_Character* OwnerCharacter;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category = "LockOnInfo")
 	float SphereRadius = 1000.f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, Category = "LockOnInfo")
 	float MaxLockOnAngle = 90.f;
 
 public:
+	UARPG_LockOnSystemComponent();
+
+	void InputTargetLockOn();
+	bool IsLockOnTarget() const;
 	AActor* FindForwardClosestTarget() const;
 	AActor* FindClosestTarget() const;
 	void SetTarget(AActor* NewTargetActor);
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+		FActorComponentTickFunction* ThisTickFunction) override;
+private:
 	void SetMovementLockOnTarget() const;
+	
 };

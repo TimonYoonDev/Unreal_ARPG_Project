@@ -10,7 +10,7 @@ class ARPGPROJECT_API UARPG_BTT_Attack : public UARPG_BTT_Base
 {
 	GENERATED_BODY()
 
-	FDelegateHandle OnAttackEndDelegateHandle;
+	FDelegateHandle OnMontageCancelDelegateHandle;
 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

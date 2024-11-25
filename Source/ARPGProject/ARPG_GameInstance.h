@@ -7,16 +7,38 @@
 #include "Engine/GameInstance.h"
 #include "ARPG_GameInstance.generated.h"
 
+class UHealthBarWidget;
+class UNiagaraSystem;
+
 UCLASS()
 class ARPGPROJECT_API UARPG_GameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 	UARPG_GameInstance();
+public:
+	UPROPERTY(EditAnywhere, Category = "Common")
+	const TObjectPtr<UParticleSystem> HitParticleSystem;
+
+	UPROPERTY(EditAnywhere, Category = "Common")
+	const TObjectPtr<UNiagaraSystem> GuardParticleSystem;
+
+	UPROPERTY(EditAnywhere, Category = "Common")
+	const TObjectPtr<USoundBase> DeathSound;
+
+	UPROPERTY(EditAnywhere, Category = "Common Enemy")
+	const TSubclassOf<UUserWidget> HealthBarWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category = "Common Enemy")
+	const TSubclassOf<UUserWidget> LockOnWidgetClass;
+
 private:
-	TMap<FString, UDataTable* > DataTable;
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> WeaponDataTable;
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> CombatDataTable;
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> CharacterDataTable;
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> MontageDataTable;
 
 public:

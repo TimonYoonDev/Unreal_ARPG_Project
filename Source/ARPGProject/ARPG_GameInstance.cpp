@@ -6,26 +6,6 @@
 
 UARPG_GameInstance::UARPG_GameInstance()
 {
-	if(const ConstructorHelpers::FObjectFinder<UDataTable> DT_Data(TEXT("/Script/Engine.DataTable'/Game/ARPG/GameData/DT_WeaponData.DT_WeaponData'")); DT_Data.Succeeded())
-	{
-		WeaponDataTable = DT_Data.Object;
-	}
-
-	if(const ConstructorHelpers::FObjectFinder<UDataTable> DT_Data(TEXT("/Script/Engine.DataTable'/Game/ARPG/GameData/DT_CombatData.DT_CombatData'")); DT_Data.Succeeded())
-	{
-        CombatDataTable = DT_Data.Object;
-	}
-
-	if(const ConstructorHelpers::FObjectFinder<UDataTable> DT_Data(TEXT("/Script/Engine.DataTable'/Game/ARPG/GameData/DT_CharacterData.DT_CharacterData'")); DT_Data.Succeeded())
-	{
-        CharacterDataTable = DT_Data.Object;
-	}
-
-    if (const ConstructorHelpers::FObjectFinder<UDataTable> DT_Data(TEXT("/Script/Engine.DataTable'/Game/ARPG/GameData/DT_MontageData.DT_MontageData'")); DT_Data.Succeeded())
-    {
-        MontageDataTable = DT_Data.Object;
-    }
-
 }
 
 bool UARPG_GameInstance::TryGetWeaponData(const FString& RowName, FARPG_WeaponData& OutWeaponData) const

@@ -4,12 +4,16 @@
 #include "ARPG_PlayerCharacter.h"
 
 #include "InputActionValue.h"
+#include "KismetAnimationLibrary.h"
 #include "KismetTraceUtils.h"
 #include "ARPGProject/ARPG_GameMode.h"
 #include "ARPGProject/ARPG_InteractableInterface.h"
 #include "Camera/CameraComponent.h"
 #include "Component/ARPG_CameraComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AARPG_PlayerCharacter::AARPG_PlayerCharacter()
 {
@@ -39,6 +43,16 @@ AARPG_PlayerCharacter::AARPG_PlayerCharacter()
 	{
 		ArrowClass = Arrow.Class;
 	}
+
+	if (static ConstructorHelpers::FObjectFinder<USoundBase> Sound(TEXT("/Script/MetasoundEngine.MetaSoundSource'/Game/ARPG/Audio/Combat/MSS_BowDraw.MSS_BowDraw'")); Sound.Succeeded())
+	{
+		BowDrawSound = Sound.Object;
+	}
+
+	if (static ConstructorHelpers::FObjectFinder<USoundBase> Sound(TEXT("/Script/MetasoundEngine.MetaSoundSource'/Game/ARPG/Audio/Combat/MSS_BowShoot.MSS_BowShoot'")); Sound.Succeeded())
+	{
+		BowShootSound = Sound.Object;
+	}
 }
 
 void AARPG_PlayerCharacter::BeginPlay()
@@ -58,6 +72,10 @@ void AARPG_PlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
     InteractWithObject();
+	if(PressBowDrawingPower < PressBowDrawingMaxPower)
+	{
+		PressBowDrawingPower += DeltaSeconds;
+	}
 }
 
 void AARPG_PlayerCharacter::Move(const FInputActionValue& Value)
@@ -100,11 +118,19 @@ void AARPG_PlayerCharacter::Look(const FInputActionValue& Value)
 
 void AARPG_PlayerCharacter::InputLightAttack(const FInputActionValue& Value)
 {
+	if(GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	if (Value.Get<bool>())
 	{
 		if (bIsBowMode)
 		{
 			bIsBowDrawing = true;
+			BowDrawAudio = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), BowDrawSound, GetActorLocation());
+			BowDrawAudio->Play();
+			PressBowDrawingPower = 0.f;
 			return;
 		}
 
@@ -135,24 +161,30 @@ void AARPG_PlayerCharacter::InputLightAttack(const FInputActionValue& Value)
 		}
 		LockOnSystemComponent->SetTarget(LockOnSystemComponent->FindClosestTarget());
 
-		if (DirectionRotator.IsNearlyZero() == false)
+		/*if (DirectionRotator.IsNearlyZero() == false)
 		{
 			SetActorRotation(DirectionRotator);
-		}
+		}*/
 		MeleeCombatComponent->InputAttack();
 	}
 	else
 	{
-		if (bIsBowDrawing)
+		if (bIsBowMode && bIsBowDrawing)
 		{
 			bIsBowDrawing = false;
+			BowDrawAudio->Stop();
 			ShootArrow();
-		}
+		}		
 	}
 }
 
 void AARPG_PlayerCharacter::InputHeavyAttack(const FInputActionValue& Value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	if(Value.Get<bool>())
 	{
 		if (bIsMainWeaponGrip == false)
@@ -180,27 +212,45 @@ void AARPG_PlayerCharacter::InputHeavyAttack(const FInputActionValue& Value)
 
 void AARPG_PlayerCharacter::InputRoll(const FInputActionValue& Value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	if (MeleeCombatComponent->IsMontagePlaying())
 	{
 		return;
 	}
-	bRolling = Value.Get<bool>();
-	if (bRolling)
+
+	if (Value.Get<bool>())
 	{
-		SetActorRotation(DirectionRotator);
-		PlayAnimMontage(CombatData.RollMontage);
-		LaunchCharacter(GetActorForwardVector() * 1000.f, false, false);
+		if (bRolling)
+		{
+			return;
+		}
+
+		bRolling = true;
+		LaunchCharacter(GetLastMovementInputVector() * 700.f, false, false);
+		FTimerHandle OutHandle;
+		GetWorld()->GetTimerManager().SetTimer(OutHandle, [this]()->void { bRolling = false; }, 0.5f, false);
 	}
 }
 
 void AARPG_PlayerCharacter::InputGuard(const FInputActionValue& Value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	if (Value.Get<bool>())
 	{
 		if (MeleeCombatComponent->IsMontagePlaying())
 		{
 			return;
 		}
+		bIsMainWeaponGrip = true;
+		WeaponAttach("Sword_Grip");
 		MeleeCombatComponent->Guard();
 	}
 	else
@@ -227,17 +277,27 @@ void AARPG_PlayerCharacter::InputParkour(const FInputActionValue& Value)
 
 void AARPG_PlayerCharacter::InputBowMode(const FInputActionValue& Value)
 {
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
 	bIsBowMode = Value.Get<bool>();
 	OnChangedBowAimMode.Broadcast(bIsBowMode);
 	if (MainWeapon != nullptr)
 	{
-
 		MainWeapon->SetActorHiddenInGame(bIsBowMode);
 	}
 	if (BowWeapon != nullptr)
 	{
 		BowWeapon->SetActorHiddenInGame(bIsBowMode == false);
 	}
+	if(ArrowProjectile)
+	{
+		ArrowProjectile->SetActorHiddenInGame(bIsBowMode == false);
+	}
+
+	CreateArrowProjectile();
 
 	if (bIsBowMode)
 	{
@@ -247,9 +307,26 @@ void AARPG_PlayerCharacter::InputBowMode(const FInputActionValue& Value)
 	{
 		CameraComponent->OriginCameraMove();
 	}
+	LockOnSystemComponent->SetTarget(nullptr);
 	GetCharacterMovement()->bUseControllerDesiredRotation = bIsBowMode;
 	GetCharacterMovement()->bOrientRotationToMovement = bIsBowMode == false;
 	GetCharacterMovement()->MaxWalkSpeed = bIsBowMode ? 250 : 500;
+}
+
+void AARPG_PlayerCharacter::CreateArrowProjectile()
+{
+	if (ArrowProjectile == nullptr)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		if (ArrowProjectile = GetWorld()->SpawnActor<AARPG_Projectile>(ArrowClass, GetTransform(), SpawnParams); ArrowProjectile)
+		{
+			const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+			ArrowProjectile->AttachToComponent(GetMesh(), AttachmentRules, "Arrow_Grip");
+		}
+	}
 }
 
 FVector AARPG_PlayerCharacter::GetAimLocation() const
@@ -283,23 +360,18 @@ void AARPG_PlayerCharacter::ShootArrow()
 	const FVector AimLocation = GetAimLocation();
 	const FVector AimDirection = (AimLocation - BowSocketLocation).GetSafeNormal();
 
-	if (ArrowClass)
+	if (ArrowProjectile)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		FDetachmentTransformRules DTR(EDetachmentRule::KeepWorld, false);
+		ArrowProjectile->DetachFromActor(DTR);
+		PressBowDrawingPower = UKismetMathLibrary::Clamp(PressBowDrawingPower, 1, PressBowDrawingMaxPower);
+		ArrowProjectile->SetVelocity(AimDirection * PressBowDrawingPower * 2000.f);
+		ArrowProjectile->AttackCheckBegin();
+		ArrowProjectile = nullptr;
+		CreateArrowProjectile();
 
-		if (AARPG_Projectile* Arrow = GetWorld()->SpawnActor<AARPG_Projectile>(ArrowClass, BowSocketLocation, AimDirection.Rotation(), SpawnParams); Arrow && Arrow->ProjectileMovementComponent)
-		{
-			Arrow->ProjectileMovementComponent->Velocity = AimDirection * Arrow->ProjectileMovementComponent->InitialSpeed;
-			Arrow->AttackCheckBegin();
-		}
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), BowShootSound, GetActorLocation(), GetActorRotation());
 	}
-}
-
-void AARPG_PlayerCharacter::PressBowDrawing()
-{
 }
 
 void AARPG_PlayerCharacter::ParkourScanner()

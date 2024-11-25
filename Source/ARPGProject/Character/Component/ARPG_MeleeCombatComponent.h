@@ -5,7 +5,8 @@
 #include "Components/ActorComponent.h"
 #include "ARPG_MeleeCombatComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnAttackEndDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnMontageEndDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnMontageCancelDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ARPGPROJECT_API UARPG_MeleeCombatComponent : public UActorComponent
@@ -34,16 +35,21 @@ public:
 	FTimerHandle ParryTimerHandle;
 	float ParryTime = 0.5f;
 
-	FOnAttackEndDelegate OnAttackEndDelegate;
+	FOnMontageEndDelegate OnMontageEndDelegate;
+	FOnMontageCancelDelegate OnMontageCancelDelegate;
+
 
 protected:
 	virtual void BeginPlay() override;
 
 public:	
 	void PlayMontage(const UAnimMontage* Montage, const FName NextSection = "");
+	void StopMontage() const;
 
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 	bool IsMontagePlaying() const;
 
 private:

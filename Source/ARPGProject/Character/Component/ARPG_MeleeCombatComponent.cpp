@@ -28,6 +28,7 @@ void UARPG_MeleeCombatComponent::BeginPlay()
 		return;
 	}
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UARPG_MeleeCombatComponent::OnMontageEnded);
+	AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UARPG_MeleeCombatComponent::OnMontageBlendOut);
 }
 
 void UARPG_MeleeCombatComponent::InputAttack()
@@ -127,16 +128,33 @@ void UARPG_MeleeCombatComponent::PlayMontage(const UAnimMontage* Montage, const 
 	}
 }
 
+void UARPG_MeleeCombatComponent::StopMontage() const
+{
+	if (AnimInstance == nullptr)
+	{
+		return;
+	}
+	AnimInstance->StopAllMontages(0);
+}
+
 void UARPG_MeleeCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Montage End : %s"), bInterrupted ? TEXT("true") : TEXT("false")));
+	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Montage End : %s - %s"), bInterrupted ? TEXT("true") : TEXT("false"), *GetOwner()->GetActorNameOrLabel()));
+	OnMontageCancelDelegate.Broadcast();
 	if (bInterrupted)
 	{
-		// 강제 종료되면 반환
 		return;
 	}
 	bMontagePlaying = false;
-	OnAttackEndDelegate.Broadcast();
+	OnMontageEndDelegate.Broadcast();
+}
+
+void UARPG_MeleeCombatComponent::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Montage BlendOut : %s - %s"), bInterrupted ? TEXT("true") : TEXT("false"), *GetOwner()->GetActorNameOrLabel()));
+
+	bMontagePlaying = false;
+	
 }
 
 bool UARPG_MeleeCombatComponent::IsMontagePlaying() const

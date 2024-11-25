@@ -2,7 +2,8 @@
 
 
 #include "ARPG_BTT_LockOn.h"
-#include "ARPGProject/Character/ARPG_Character.h"
+
+#include "ARPGProject/Character/ARPG_AICharacterInterface.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
 EBTNodeResult::Type UARPG_BTT_LockOn::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -16,21 +17,20 @@ EBTNodeResult::Type UARPG_BTT_LockOn::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	}
 	if(IsLockOn)
 	{
-		AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName));
-		if (!TargetActor)
+		if (const AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject(TargetActorKey.SelectedKeyName)); !TargetActor)
 		{
 			return EBTNodeResult::Failed;
 		}
-		if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character)
+		if(AICharacterInterface)
 		{
-			Character->GetLockOnSystemComponent()->SetTarget(TargetActor);
+			AICharacterInterface->SetLockOn(true);
 		}
 	}
 	else
 	{
-		if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character)
+		if (AICharacterInterface)
 		{
-			Character->GetLockOnSystemComponent()->SetTarget(nullptr);
+			AICharacterInterface->SetLockOn(false);
 		}
 	}
 

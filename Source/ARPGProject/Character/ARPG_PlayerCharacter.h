@@ -4,6 +4,8 @@
 #include "ARPG_Character.h"
 #include "ARPG_PlayerCharacter.generated.h"
 
+class UARPG_CameraComponent;
+
 UCLASS()
 class ARPGPROJECT_API AARPG_PlayerCharacter : public AARPG_Character
 {
@@ -17,16 +19,16 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
+	TObjectPtr<UCameraComponent> FollowCamera;
 
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UARPG_CameraComponent* CameraComponent;
+	TObjectPtr<UARPG_CameraComponent> CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
-	USceneComponent* ArrowPos;
+	TObjectPtr<USceneComponent> ArrowPos;
 
 	float PressBowDrawingPower;
 	const float PressBowDrawingMaxPower = 3.f;
@@ -36,6 +38,18 @@ private:
 	TSubclassOf<AARPG_Projectile> ArrowClass;
 	UPROPERTY()
 	TObjectPtr<AARPG_WeaponBase> BowWeapon;
+	UPROPERTY()
+	TObjectPtr<AARPG_Projectile> ArrowProjectile;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> BowDrawSound;
+	UPROPERTY()
+	TObjectPtr<USoundBase> BowShootSound;
+
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> BowDrawAudio;
+
+	bool IsPlayingRoll;
 
 public:
 	virtual void BeginPlay() override;
@@ -51,14 +65,10 @@ public:
 	void InputParkour(const FInputActionValue& Value);
 	void InputBowMode(const FInputActionValue& Value);
 
-
-	
-
-
 private:
+	void CreateArrowProjectile();
 	FVector GetAimLocation() const;
 	void ShootArrow();
-	void PressBowDrawing();
 
 	void ParkourScanner();
 	void ParkourScannerSub(FHitResult HitResult);

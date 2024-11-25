@@ -1,18 +1,14 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ARPG_CameraComponent.h"
 
 #include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 UARPG_CameraComponent::UARPG_CameraComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
 	OriginCameraInfo = new FARPG_CameraInfo;
-	OriginCameraInfo->TargetArmLength = 250.f;
-	OriginCameraInfo->SocketOffset = FVector(0, 0, 130);
+	OriginCameraInfo->TargetArmLength = 300.f;
+	OriginCameraInfo->SocketOffset = FVector(50, 50, 50);
 	OriginCameraInfo->FieldOfView = 90;
 	OriginCameraInfo->bEnableCameraLag = true;
 
@@ -63,12 +59,6 @@ void UARPG_CameraComponent::FinishAttackCameraMove()
 	EndCameraInfo = FinishAttackCameraInfo;
 	CurrentCameraMovingTime = 0;
 	CameraBoom->bDoCollisionTest = false;
-}
-
-void UARPG_CameraComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	//UKismetSystemLibrary::PrintString(GetWorld(), *CameraBoom->GetOwner()->GetActorNameOrLabel());
 }
 
 void UARPG_CameraComponent::SetCameraInfo(const FARPG_CameraInfo* CameraInfo) const

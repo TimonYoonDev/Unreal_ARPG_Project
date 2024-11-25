@@ -16,18 +16,22 @@ class ARPGPROJECT_API AARPG_Projectile : public AActor
 public:	
 	AARPG_Projectile();
 
-	void SetVelocity(FVector Velocity);
+	void SetVelocity(const FVector& Velocity) const;
 
 	void AttackCheckBegin();
 	void AttackCheckEnd();
 
 	virtual void Tick(float DeltaTime) override;
 
+private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = true))
 	UParticleSystem* TrailParticle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = true))
 	UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY()
+	TObjectPtr<USoundBase> HitSound;
 
 
 protected:

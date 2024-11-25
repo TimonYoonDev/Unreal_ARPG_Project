@@ -1,15 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ARPG_WeaponBase.h"
 
 #include "Engine/DamageEvents.h"
 #include "Particles/ParticleSystemComponent.h"
 
-// Sets default values
 AARPG_WeaponBase::AARPG_WeaponBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>("Pivot");
@@ -41,7 +36,6 @@ void AARPG_WeaponBase::AttackCheckEnd()
 	ParticleSystem->EndTrails();
 }
 
-// Called when the game starts or when spawned
 void AARPG_WeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -77,7 +71,6 @@ void AARPG_WeaponBase::AttackTrace()
 
 			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Target %s"), *StatID.ToString());
 	}
 
 //#if ENABLE_DRAW_DEBUG
@@ -86,7 +79,6 @@ void AARPG_WeaponBase::AttackTrace()
 //#endif
 }
 
-// Called every frame
 void AARPG_WeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

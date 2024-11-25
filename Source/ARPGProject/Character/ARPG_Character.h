@@ -15,10 +15,6 @@
 #include "Component/ARPG_LockOnSystemComponent.h"
 #include "Component/ARPG_MeleeCombatComponent.h"
 #include "GameFramework/Character.h"
-#include "Components/WidgetComponent.h"
-
-#include "NiagaraFunctionLibrary.h"
-#include "NiagaraComponent.h"
 
 #include "ARPG_Character.generated.h"
 
@@ -38,9 +34,6 @@ class ARPGPROJECT_API AARPG_Character : public ACharacter, public IARPG_Characte
 	GENERATED_BODY()
 public:
 	AARPG_Character();
-public:
-
-	
 
 	OnChangedBowAimMode OnChangedBowAimMode;
 protected:
@@ -62,15 +55,10 @@ protected:
 	TSubclassOf<AARPG_WeaponBase> WeaponBase;
 
 	FRotator DirectionRotator;
-	UPROPERTY()
-	UParticleSystem* HitParticleSystem;
-	UPROPERTY()
-	TObjectPtr<UNiagaraSystem> ParryParticleSystem;
 
 	UPROPERTY()
 	AARPG_AIController* AIController;
-	UPROPERTY()
-	UWidgetComponent* HealthWidgetComponent;
+
 	UPROPERTY()
 	UARPG_GameInstance* GameInstance;
 
@@ -78,10 +66,9 @@ protected:
 	TObjectPtr<UAnimMontage> ParkourAnim;
 
 	UPROPERTY()
-	TObjectPtr<USoundBase> DeathSound;
-
-	UPROPERTY()
 	TObjectPtr<AARPG_WeaponBase> MainWeapon;
+
+
 
 	UPROPERTY(VisibleAnywhere, Category = "Finish Attack")
 	TObjectPtr<AActor> FinishAttackTargetActor;
@@ -97,8 +84,6 @@ private:
 	bool bIsKnockBack;
 	bool bIsFinishAttack;
 
-	
-	
 
 	TObjectPtr<AARPG_PlayerState> PlayerState;
 	UPROPERTY()
@@ -118,10 +103,11 @@ public:
 	bool IsRolling() const;
 	bool IsGuard() const;
 	bool IsKnockBack() const;
+	virtual bool IsLockOnTarget() const;
 
-	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) override;
-	virtual void AttackCheckBegin_Implementation() override;
-	virtual void AttackCheckEnd_Implementation() override;
+	virtual void SetNextCombo(const UAnimMontage* NewNextComboMontage) override;
+	virtual void AttackCheckBegin() override;
+	virtual void AttackCheckEnd() override;
 	virtual void WeaponAttach(const FName AttachSocketName) override;
 	virtual void ParryingReaction() override;
 	virtual void FinishAttack() override;
@@ -134,8 +120,6 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-
-
 	void SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget);
 protected:
 	UFUNCTION()
@@ -145,9 +129,6 @@ protected:
 	
 	
 private:
-
-	
-
 	UFUNCTION()
 	void OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -155,15 +136,6 @@ private:
 	UFUNCTION()
 	void OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	
-
-	
-	
-	
-
-	
-	
 
 public:
 	FORCEINLINE UARPG_MeleeCombatComponent* GetMeleeCombatComponent() const { return MeleeCombatComponent; }

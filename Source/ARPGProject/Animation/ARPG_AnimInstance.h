@@ -70,4 +70,9 @@ private:
 	float BowAimingPitch;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	float BowAimingAlpha;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Step", meta = (AllowPrivateAccess = true))
+	bool IsStep;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Step", meta = (AllowPrivateAccess = true))
+	bool IsCacheStep;
 };

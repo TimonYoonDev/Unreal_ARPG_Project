@@ -1,13 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ARPG_Projectile.h"
 
 #include "Character/ARPG_Character.h"
 #include "Engine/DamageEvents.h"
+#include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
-// Sets default values
 AARPG_Projectile::AARPG_Projectile()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -30,11 +27,19 @@ AARPG_Projectile::AARPG_Projectile()
 
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovement");
 	ProjectileMovementComponent->Velocity = FVector::Zero();
+	ProjectileMovementComponent->SetActive(false);
+
+	if (const ConstructorHelpers::FObjectFinder<USoundBase> Sound(TEXT("/Script/MetasoundEngine.MetaSoundSource'/Game/ARPG/Audio/Combat/MSS_ArrowHit.MSS_ArrowHit'")); Sound.Succeeded())
+	{
+		HitSound = Sound.Object;
+	}
 }
 
-void AARPG_Projectile::SetVelocity(FVector Velocity)
+void AARPG_Projectile::SetVelocity(const FVector& Velocity) const
 {
 	ProjectileMovementComponent->Velocity = Velocity;
+	ProjectileMovementComponent->ProjectileGravityScale = 0.5f;
+	ProjectileMovementComponent->SetActive(true);
 }
 
 void AARPG_Projectile::AttackCheckBegin()
@@ -87,12 +92,13 @@ void AARPG_Projectile::AttackTrace()
 				EAttachmentRule::KeepWorld, true);
 			this->AttachToComponent(Character->GetMesh(), AttachmentRules, BoneName);
 			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, GetActorLocation(), GetActorRotation());
 		}
 		AttackCheckEnd();
 	}
 
 }
-// Called every frame
+
 void AARPG_Projectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

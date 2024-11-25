@@ -12,7 +12,7 @@ class ARPGPROJECT_API UARPG_BTT_MontagePlay : public UARPG_BTT_Base
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> Montage;
 
-	FDelegateHandle OnMontageEndDelegateHandle;
+	FDelegateHandle OnMontageCancelDelegateHandle;
 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	

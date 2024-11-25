@@ -18,4 +18,10 @@ public:
 	virtual void SetWalkSpeed(const float InSpeed) = 0;
 
 	virtual void SetDefence(const bool bIsDefence) = 0;
+
+	virtual void SetLockOn(const bool bIsLockOn) = 0;
+
+
+	virtual void SetLockOnWidget(const bool bShowWidget) = 0;
+	//virtual void RotateToTarget() = 0;
 };

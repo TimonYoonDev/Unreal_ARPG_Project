@@ -14,9 +14,9 @@ void UARPG_ANS_NextCombo::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSeq
 		return;
 	}
 
-	if(Owner->Implements<UARPG_CharacterInterface>())
+	if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(Owner); Interface)
 	{
-		IARPG_CharacterInterface::Execute_SetNextCombo(Owner, NextComboMontage);
+		Interface->SetNextCombo(NextComboMontage);
 	}
 }
 
@@ -28,8 +28,8 @@ void UARPG_ANS_NextCombo::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSeque
 		return;
 	}
 
-	if (Owner->Implements<UARPG_CharacterInterface>())
+	if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(Owner); Interface)
 	{
-		IARPG_CharacterInterface::Execute_SetNextCombo(Owner, nullptr);
+		Interface->SetNextCombo(nullptr);
 	}
 }

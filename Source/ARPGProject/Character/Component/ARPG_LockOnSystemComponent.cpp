@@ -12,45 +12,13 @@ UARPG_LockOnSystemComponent::UARPG_LockOnSystemComponent()
 }
 
 
-void UARPG_LockOnSystemComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	OwnerCharacter = Cast<AARPG_Character>(GetOwner());
-	SetMovementLockOnTarget();
-	
-}
-
-
-void UARPG_LockOnSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (OwnerCharacter == nullptr)
-	{
-		return;
-	}
-	if (TargetCharacter)
-	{
-		if (TargetCharacter->GetAttributeComponent()->IsDeath())
-		{
-			SetTarget(FindClosestTarget());
-			return;
-		}
-		const FRotator CurrentRot = OwnerCharacter->GetActorRotation();// GetControlRotation();
-		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(OwnerCharacter->GetActorLocation(), TargetCharacter->GetActorLocation());
-		const FRotator ResultRot = UKismetMathLibrary::RInterpTo(CurrentRot, TargetRot, DeltaTime, 20.f);
-
-		OwnerCharacter->SetActorRotation(ResultRot);// GetController()->SetControlRotation(ResultRot);
-	}
-}
-
 void UARPG_LockOnSystemComponent::InputTargetLockOn()
 {
 	if (OwnerCharacter == nullptr)
 	{
 		return;
 	}
-	if(IsLockOnTarget())
+	if (IsLockOnTarget())
 	{
 		SetTarget(nullptr);
 		return;
@@ -135,24 +103,29 @@ AActor* UARPG_LockOnSystemComponent::FindClosestTarget() const
 	float ClosestDistance = SphereRadius;
 	if (TArray<FHitResult> HitResults; GetWorld()->SweepMultiByObjectType(HitResults, StartPos, StartPos, FQuat::Identity, COQP, CS, CQP))
 	{
+		FName TargetTag = GetOwner()->ActorHasTag("Player") ? "Enemy" : "Player";
+
 		for (auto HitResult : HitResults)
 		{
-			FVector DirectionToEnemy = HitResult.GetActor()->GetActorLocation() - StartPos;
-			const float DistanceToEnemy = DirectionToEnemy.Size();
-			DirectionToEnemy.Normalize();
-			
-			FVector EndPos = StartPos + DirectionToEnemy * ClosestDistance;
-
-			DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
-
-			if (FHitResult LineTraceHitResult; GetWorld()->LineTraceSingleByChannel(LineTraceHitResult, StartPos, EndPos, ECC_Pawn, CQP))
+			if (HitResult.GetActor()->ActorHasTag(TargetTag))
 			{
-				if (HitResult.GetActor() == LineTraceHitResult.GetActor())
+				FVector DirectionToEnemy = HitResult.GetActor()->GetActorLocation() - StartPos;
+				const float DistanceToEnemy = DirectionToEnemy.Size();
+				DirectionToEnemy.Normalize();
+
+				FVector EndPos = StartPos + DirectionToEnemy * ClosestDistance;
+
+				//DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
+
+				if (FHitResult LineTraceHitResult; GetWorld()->LineTraceSingleByChannel(LineTraceHitResult, StartPos, EndPos, ECC_Pawn, CQP))
 				{
-					if (DistanceToEnemy < ClosestDistance)
+					if (HitResult.GetActor() == LineTraceHitResult.GetActor())
 					{
-						ClosestTarget = HitResult.GetActor();
-						ClosestDistance = DistanceToEnemy;
+						if (DistanceToEnemy < ClosestDistance)
+						{
+							ClosestTarget = HitResult.GetActor();
+							ClosestDistance = DistanceToEnemy;
+						}
 					}
 				}
 			}
@@ -165,15 +138,15 @@ void UARPG_LockOnSystemComponent::SetTarget(AActor* NewTargetActor)
 {
 	if (TargetCharacter)
 	{
-		//TargetCharacter->SetLockOnWidget(false);
+		TargetCharacter->SetLockOnWidget(false);
 	}
 
 	if (NewTargetActor != nullptr)
 	{
-		TargetCharacter = Cast<AARPG_Character>(NewTargetActor);
+		TargetCharacter = Cast<AARPG_AICharacter>(NewTargetActor);
 		if (TargetCharacter)
 		{
-			//TargetCharacter->SetLockOnWidget(true);
+			TargetCharacter->SetLockOnWidget(true);
 		}
 	}
 	else
@@ -182,6 +155,39 @@ void UARPG_LockOnSystemComponent::SetTarget(AActor* NewTargetActor)
 	}
 
 	SetMovementLockOnTarget();
+}
+
+
+
+void UARPG_LockOnSystemComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	OwnerCharacter = Cast<AARPG_Character>(GetOwner());
+	SetMovementLockOnTarget();
+	
+}
+
+void UARPG_LockOnSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (OwnerCharacter == nullptr)
+	{
+		return;
+	}
+	if (TargetCharacter)
+	{
+		if (TargetCharacter->GetAttributeComponent()->IsDeath())
+		{
+			SetTarget(FindClosestTarget());
+			return;
+		}
+		const FRotator CurrentRot = OwnerCharacter->GetActorRotation();// GetControlRotation();
+		const FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(OwnerCharacter->GetActorLocation(), TargetCharacter->GetActorLocation());
+		const FRotator ResultRot = UKismetMathLibrary::RInterpTo(CurrentRot, TargetRot, DeltaTime, 20.f);
+
+		OwnerCharacter->SetActorRotation(ResultRot);// GetController()->SetControlRotation(ResultRot);
+	}
 }
 
 void UARPG_LockOnSystemComponent::SetMovementLockOnTarget() const

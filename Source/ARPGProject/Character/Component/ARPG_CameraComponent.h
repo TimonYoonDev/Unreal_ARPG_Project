@@ -31,10 +31,6 @@ public:
 	void AimCameraMove();
 	void FinishAttackCameraMove();
 
-
-protected:
-	virtual void BeginPlay() override;
-
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;

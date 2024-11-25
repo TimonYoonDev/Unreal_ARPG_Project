@@ -45,10 +45,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
 	IsGuard = Character->IsGuard();
-	if (Character->GetLockOnSystemComponent())
-	{
-		IsLockOnTarget = Character->GetLockOnSystemComponent()->IsLockOnTarget();
-	}
+	IsLockOnTarget = Character->IsLockOnTarget();
 
 	if (bHit)
 	{
@@ -64,6 +61,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		IsBowDrawing = PlayerCharacter->bIsBowDrawing;
 		BowAimingPitch = PlayerCharacter->GetBaseAimRotation().Pitch;
 		BowAimingAlpha = IsBowMode ? 1 : 0;
+		IsStep = PlayerCharacter->IsRolling();
 	}
 	
 }
@@ -72,6 +70,7 @@ void UARPG_AnimInstance::NativeLateUpdateAnimation()
 {
 	bExecuteNextFrame = false;
 	bIsCurrentMainWeaponGrip = bIsMainWeaponGrip;
+	IsCacheStep = IsStep;
 }
 
 void UARPG_AnimInstance::HitTrigger(const float InHitAngle)

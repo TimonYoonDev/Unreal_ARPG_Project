@@ -9,17 +9,11 @@ struct FARPG_WeaponData : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	FText WeaponName;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<AARPG_WeaponBase> WeaponClass;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	float AttackPower;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString CombatDataRowName;
 };
 
 USTRUCT(BlueprintType)
@@ -27,19 +21,13 @@ struct FARPG_CombatData: public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	int32 CombatPoseIndex;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> AttackMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> HeavyAttackMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<UAnimMontage> RollMontage;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	bool bChargedAttack;
 
 };
@@ -49,16 +37,16 @@ struct FARPG_CharacterData: public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	int32 MaxHeath;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	int32 Damage;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UBehaviorTree> BehaviorTree;
 
-	//피격
-	//리액션 시트
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AARPG_WeaponBase> WeaponClass;
 };
 
 USTRUCT()
@@ -66,23 +54,23 @@ struct FARPG_MontageData: public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> ParryingReactionMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> GuardReactionMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> FinishAttackMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> FinishAttackReactionMontage;
 
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> AssassinateMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> AssassinateReactionMontage;
 
 };

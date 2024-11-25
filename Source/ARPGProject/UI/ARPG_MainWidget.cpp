@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ARPG_MainWidget.h"
 
 void UARPG_MainWidget::SetBind(const AARPG_Character* Character)

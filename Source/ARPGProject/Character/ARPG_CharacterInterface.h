@@ -21,18 +21,11 @@ class ARPGPROJECT_API IARPG_CharacterInterface
 	GENERATED_BODY()
 
 public:
+	virtual void SetNextCombo(const UAnimMontage* NewNextComboMontage) = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void SetNextCombo(const UAnimMontage* NewNextComboMontage);
-	virtual void SetNextCombo_Implementation(const UAnimMontage* NewNextComboMontage) = 0;
+	virtual void AttackCheckBegin() = 0;
 
-	UFUNCTION(BlueprintNativeEvent)
-	void AttackCheckBegin();
-	virtual void AttackCheckBegin_Implementation() = 0;
-
-	UFUNCTION(BlueprintNativeEvent)
-	void AttackCheckEnd();
-	virtual void AttackCheckEnd_Implementation() = 0;
+	virtual void AttackCheckEnd() = 0;
 
 	virtual void WeaponAttach(const FName AttachSocketName) = 0;
 
