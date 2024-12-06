@@ -31,8 +31,14 @@ public:
 
 	virtual void ParryingReaction() = 0;
 
-	virtual void FinishAttack() = 0;
+	virtual void FinishAttackReaction() = 0;
 
 	virtual void FinishAttackDeath() = 0;
+
+	virtual void AssassinateReaction() = 0;
+
+	virtual void SetMotionWarping(const AActor* InTarget) = 0;
+
+	virtual void SetMotionWarping(const FVector& TargetLocation, const FRotator& TargetRotation) = 0;
 
 };

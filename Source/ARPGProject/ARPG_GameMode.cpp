@@ -1,5 +1,6 @@
 #include "ARPG_GameMode.h"
 
+#include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AARPG_GameMode::StartSlowMotion(float SlowDownFactor, float Duration)
@@ -15,4 +16,24 @@ void AARPG_GameMode::ResetTimeDilation()
 {
     // 원래 속도로 복원
     UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.0f);
+}
+
+void AARPG_GameMode::IncreaseKillCount()
+{
+    CurrentKillCount++;
+    UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Kill Count %d"), CurrentKillCount));
+    if(IsCompleteMission())
+    {
+        OnGameEndEvent.Broadcast(true);
+    }
+}
+
+bool AARPG_GameMode::IsCompleteMission()
+{
+    return CurrentKillCount >= CompleteKillCount;
+}
+
+void AARPG_GameMode::PlayerDeath()
+{
+    OnGameEndEvent.Broadcast(false);
 }

@@ -23,5 +23,8 @@ public:
 
 
 	virtual void SetLockOnWidget(const bool bShowWidget) = 0;
+	virtual void SetAssassinateWidget(const bool bShowWidget) = 0;
+
+	virtual FVector GetStartSpawnLocation() = 0;
 	//virtual void RotateToTarget() = 0;
 };

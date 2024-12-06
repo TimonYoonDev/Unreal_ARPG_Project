@@ -3,8 +3,9 @@
 
 #include "ARPG_PlayerCharacter.h"
 
+#include "ARPG_AICharacter.h"
+#include "ARPG_PlayerController.h"
 #include "InputActionValue.h"
-#include "KismetAnimationLibrary.h"
 #include "KismetTraceUtils.h"
 #include "ARPGProject/ARPG_GameMode.h"
 #include "ARPGProject/ARPG_InteractableInterface.h"
@@ -17,22 +18,27 @@
 
 AARPG_PlayerCharacter::AARPG_PlayerCharacter()
 {
+	FinishAttackCameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("FinishAttackCameraBoom"));
+	FinishAttackCameraBoom->SetupAttachment(RootComponent);
+	FinishAttackCameraBoom->TargetArmLength = 300.0f;
+	FinishAttackCameraBoom->bUsePawnControlRotation = false;
+	FinishAttackCameraBoom->SetRelativeLocationAndRotation(FVector(0, -60, 50), FRotator(0, -150, 0));
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 400.0f;
 	CameraBoom->bUsePawnControlRotation = true;
 
+	
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
 	CameraComponent = CreateDefaultSubobject<UARPG_CameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->Init(CameraBoom, FollowCamera);
-
-
+	
 	ArrowPos = CreateDefaultSubobject<USceneComponent>(TEXT("ArrowPos"));
 	ArrowPos->SetupAttachment(GetMesh(), "Arrow_Grip");
-
 
 	if (static ConstructorHelpers::FClassFinder<AARPG_WeaponBase> Bow(TEXT("/Script/Engine.Blueprint'/Game/ARPG/Blueprints/Weapons/BP_ARPG_Weapon_Bow.BP_ARPG_Weapon_Bow_C'")); Bow.Succeeded())
 	{
@@ -53,6 +59,24 @@ AARPG_PlayerCharacter::AARPG_PlayerCharacter()
 	{
 		BowShootSound = Sound.Object;
 	}
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->bCanWalkOffLedgesWhenCrouching = true;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 250.f;
+
+	MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this]()->void
+		{
+			//if (FinishAttackTargetActor)
+			{
+				FinishAttackTargetActor = nullptr;
+				AARPG_PlayerController* PC = Cast<AARPG_PlayerController>(Controller);
+				FInputModeGameOnly InputMode;
+				PC->SetInputMode(InputMode);
+				FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::KeepWorldTransform);
+				FLatentActionInfo LatentActionInfo;
+				LatentActionInfo.CallbackTarget = this;
+				UKismetSystemLibrary::MoveComponentTo(FollowCamera, FVector::ZeroVector, FRotator::ZeroRotator, false, false, 0.2f, false, EMoveComponentAction::Move, LatentActionInfo);
+			}
+		});
 }
 
 void AARPG_PlayerCharacter::BeginPlay()
@@ -71,14 +95,14 @@ void AARPG_PlayerCharacter::BeginPlay()
 void AARPG_PlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-    InteractWithObject();
+    //InteractWithObject();
 	if(PressBowDrawingPower < PressBowDrawingMaxPower)
 	{
-		PressBowDrawingPower += DeltaSeconds;
+		PressBowDrawingPower += DeltaSeconds * 2.f;
 	}
 }
 
-void AARPG_PlayerCharacter::Move(const FInputActionValue& Value)
+void AARPG_PlayerCharacter::InputMove(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -105,7 +129,7 @@ void AARPG_PlayerCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
-void AARPG_PlayerCharacter::Look(const FInputActionValue& Value)
+void AARPG_PlayerCharacter::InputLook(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -116,6 +140,20 @@ void AARPG_PlayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void AARPG_PlayerCharacter::Jump()
+{
+	if(GetCharacterMovement()->IsCrouching())
+	{
+		UnCrouch();
+	}
+	Super::Jump();
+}
+
+bool AARPG_PlayerCharacter::CanJumpInternal_Implementation() const
+{
+	return JumpIsAllowedInternal();
+}
+
 void AARPG_PlayerCharacter::InputLightAttack(const FInputActionValue& Value)
 {
 	if(GetCharacterMovement()->IsFalling())
@@ -123,9 +161,25 @@ void AARPG_PlayerCharacter::InputLightAttack(const FInputActionValue& Value)
 		return;
 	}
 
+	if(AssassinateTarget)
+	{
+		IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(AssassinateTarget);
+		if (Interface != nullptr)
+		{
+			Assassinate();
+			Interface->AssassinateReaction();
+			return;
+		}
+	}
+
+	if (GetCharacterMovement()->IsCrouching())
+	{
+		UnCrouch();
+	}
+
 	if (Value.Get<bool>())
 	{
-		if (bIsBowMode)
+		if (bIsBowAiming)
 		{
 			bIsBowDrawing = true;
 			BowDrawAudio = UGameplayStatics::SpawnSoundAtLocation(GetWorld(), BowDrawSound, GetActorLocation());
@@ -141,35 +195,22 @@ void AARPG_PlayerCharacter::InputLightAttack(const FInputActionValue& Value)
 		}
 
 
-		if (bCanFinishAttack)
+		if (FinishAttackTargetActor)
 		{
-			bCanFinishAttack = false;
-			if (FinishAttackTargetActor)
+			if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(FinishAttackTargetActor))
 			{
-				FVector DirectionToTarget = FinishAttackTargetActor->GetActorLocation() - GetActorLocation();
-				DirectionToTarget.Z = 0;
-
-				const FRotator TargetRotation = DirectionToTarget.Rotation();
-				SetActorRotation(TargetRotation);
-				MeleeCombatComponent->PlayMontage(MontageData.FinishAttackMontage);
-				if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(FinishAttackTargetActor))
-				{
-					Interface->FinishAttack();
-				}
-			}
-			return;
+				FinishAttack();
+				Interface->FinishAttackReaction();
+				return;
+			}			
 		}
+		
 		LockOnSystemComponent->SetTarget(LockOnSystemComponent->FindClosestTarget());
-
-		/*if (DirectionRotator.IsNearlyZero() == false)
-		{
-			SetActorRotation(DirectionRotator);
-		}*/
 		MeleeCombatComponent->InputAttack();
 	}
 	else
 	{
-		if (bIsBowMode && bIsBowDrawing)
+		if (bIsBowAiming && bIsBowDrawing)
 		{
 			bIsBowDrawing = false;
 			BowDrawAudio->Stop();
@@ -183,6 +224,11 @@ void AARPG_PlayerCharacter::InputHeavyAttack(const FInputActionValue& Value)
 	if (GetCharacterMovement()->IsFalling())
 	{
 		return;
+	}
+
+	if (GetCharacterMovement()->IsCrouching())
+	{
+		UnCrouch();
 	}
 
 	if(Value.Get<bool>())
@@ -230,7 +276,7 @@ void AARPG_PlayerCharacter::InputRoll(const FInputActionValue& Value)
 		}
 
 		bRolling = true;
-		LaunchCharacter(GetLastMovementInputVector() * 700.f, false, false);
+		LaunchCharacter(GetLastMovementInputVector() * 200.f, false, false);
 		FTimerHandle OutHandle;
 		GetWorld()->GetTimerManager().SetTimer(OutHandle, [this]()->void { bRolling = false; }, 0.5f, false);
 	}
@@ -245,10 +291,10 @@ void AARPG_PlayerCharacter::InputGuard(const FInputActionValue& Value)
 
 	if (Value.Get<bool>())
 	{
-		if (MeleeCombatComponent->IsMontagePlaying())
+		/*if (MeleeCombatComponent->IsMontagePlaying())
 		{
 			return;
-		}
+		}*/
 		bIsMainWeaponGrip = true;
 		WeaponAttach("Sword_Grip");
 		MeleeCombatComponent->Guard();
@@ -275,31 +321,31 @@ void AARPG_PlayerCharacter::InputParkour(const FInputActionValue& Value)
 	}
 }
 
-void AARPG_PlayerCharacter::InputBowMode(const FInputActionValue& Value)
+void AARPG_PlayerCharacter::InputBowAiming(const FInputActionValue& Value)
 {
 	if (GetCharacterMovement()->IsFalling())
 	{
 		return;
 	}
 
-	bIsBowMode = Value.Get<bool>();
-	OnChangedBowAimMode.Broadcast(bIsBowMode);
+	bIsBowAiming = Value.Get<bool>();
+	OnChangedBowAimMode.Broadcast(bIsBowAiming);
 	if (MainWeapon != nullptr)
 	{
-		MainWeapon->SetActorHiddenInGame(bIsBowMode);
+		MainWeapon->SetActorHiddenInGame(bIsBowAiming);
 	}
 	if (BowWeapon != nullptr)
 	{
-		BowWeapon->SetActorHiddenInGame(bIsBowMode == false);
+		BowWeapon->SetActorHiddenInGame(bIsBowAiming == false);
 	}
 	if(ArrowProjectile)
 	{
-		ArrowProjectile->SetActorHiddenInGame(bIsBowMode == false);
+		ArrowProjectile->SetActorHiddenInGame(bIsBowAiming == false);
 	}
 
 	CreateArrowProjectile();
 
-	if (bIsBowMode)
+	if (bIsBowAiming)
 	{
 		CameraComponent->AimCameraMove();
 	}
@@ -308,9 +354,37 @@ void AARPG_PlayerCharacter::InputBowMode(const FInputActionValue& Value)
 		CameraComponent->OriginCameraMove();
 	}
 	LockOnSystemComponent->SetTarget(nullptr);
-	GetCharacterMovement()->bUseControllerDesiredRotation = bIsBowMode;
-	GetCharacterMovement()->bOrientRotationToMovement = bIsBowMode == false;
-	GetCharacterMovement()->MaxWalkSpeed = bIsBowMode ? 250 : 500;
+	GetCharacterMovement()->bUseControllerDesiredRotation = bIsBowAiming;
+	GetCharacterMovement()->bOrientRotationToMovement = bIsBowAiming == false;
+	GetCharacterMovement()->MaxWalkSpeed = bIsBowAiming ? 250 : 500;
+}
+
+void AARPG_PlayerCharacter::InputCrouch(const FInputActionValue& Value)
+{
+	GetCharacterMovement()->IsCrouching() ? UnCrouch() : Crouch();
+}
+
+void AARPG_PlayerCharacter::FinishAttack()
+{
+	Super::FinishAttack();
+
+	LockOnSystemComponent->SetTarget(nullptr);
+	FollowCamera->AttachToComponent(FinishAttackCameraBoom, FAttachmentTransformRules::KeepWorldTransform);
+	FLatentActionInfo LatentActionInfo;
+	LatentActionInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(FollowCamera, FVector::ZeroVector, FRotator::ZeroRotator, false, false, 0.2f,false, EMoveComponentAction::Move, LatentActionInfo);
+}
+
+void AARPG_PlayerCharacter::Assassinate()
+{
+	Super::Assassinate();
+
+	LockOnSystemComponent->SetTarget(nullptr);
+	FollowCamera->AttachToComponent(FinishAttackCameraBoom, FAttachmentTransformRules::KeepWorldTransform);
+	FLatentActionInfo LatentActionInfo;
+	LatentActionInfo.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(FollowCamera, FVector::ZeroVector, FRotator::ZeroRotator, false, false, 0.2f, false, EMoveComponentAction::Move, LatentActionInfo);
+
 }
 
 void AARPG_PlayerCharacter::CreateArrowProjectile()
@@ -335,7 +409,7 @@ FVector AARPG_PlayerCharacter::GetAimLocation() const
 	FRotator CameraRotation;
 	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
-	const FVector TraceStart = CameraLocation;
+	const FVector TraceStart = CameraLocation + CameraRotation.Vector() * FVector::Distance(CameraLocation, GetActorLocation());
 	const FVector TraceEnd = TraceStart + (CameraRotation.Vector() * 10000.0f);
 
 	FHitResult HitResult;
@@ -422,7 +496,7 @@ void AARPG_PlayerCharacter::ParkourScannerSub(FHitResult HitResult)
 #endif
 			float Z = HitResult.Location.Z - GetActorLocation().Z;
 			SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, HitResult.Location.Z));
-			if (AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode()))
+			if (GameMode)
 			{
 				GameMode->StartSlowMotion(0.2f, 0.5f);
 			}
@@ -446,4 +520,15 @@ void AARPG_PlayerCharacter::InteractWithObject()
     }
 
     DrawDebugLine(GetWorld(), Start, End, FColor::Green);
+}
+
+void AARPG_PlayerCharacter::MoveCamera(USceneComponent* InTarget, USceneComponent* InParent)
+{
+	FAttachmentTransformRules AttachmentTransformRules(EAttachmentRule::KeepWorld, false);
+	InTarget->AttachToComponent(InParent, AttachmentTransformRules);
+
+	FLatentActionInfo Info;
+	Info.CallbackTarget = this;
+	UKismetSystemLibrary::MoveComponentTo(InTarget, FVector::ZeroVector, FRotator::ZeroRotator,
+		false, false, 0.2f, false, EMoveComponentAction::Move, Info);
 }

@@ -3,6 +3,7 @@
 
 #include "ARPG_AIController.h"
 
+#include "ARPG_Character.h"
 #include "ARPGProject/ARPG_GameInstance.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -46,16 +47,15 @@ void AARPG_AIController::RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree)
 		RunBehaviorTree(BehaviorTree);
 	}
 }
-void AARPG_AIController::StopAI() const
+void AARPG_AIController::StopAI()
 {
-	if(BrainComponent == nullptr)
+	if(BrainComponent)
 	{
-		return;
-	}
-
-	if (UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent))
-	{
-		BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
+		if (UBehaviorTreeComponent* BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent))
+		{
+			BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
+		}
+		SetFocus(nullptr);
 	}
 }
 
@@ -81,26 +81,26 @@ void AARPG_AIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus St
 		GetWorld()->GetTimerManager().ClearTimer(EnemyTime);
 		if (Stimulus.Type == SightConfig->GetSenseID())
 		{
-			//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Sighted Target: %s"), *Actor->GetName()));
 			// 타겟이 시야에 들어왔을 때의 로직
 			GetBlackboardComponent()->SetValueAsBool(HasLineOfSightKey, true);
 			GetBlackboardComponent()->SetValueAsObject(TargetActorKey, Actor);
 			AttackTarget = Actor;
+			Cast<AARPG_Character>(GetPawn())->SetMotionWarping(AttackTarget);
 			
 		}
 		else if (Stimulus.Type == DamageConfig->GetSenseID())
 		{
-			//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Damaged by Target: %s"), *Actor->GetName()));
 			// 데미지를 입힌 타겟의 로직
 			GetBlackboardComponent()->SetValueAsBool(HasLineOfSightKey, true);
 			GetBlackboardComponent()->SetValueAsObject(TargetActorKey, Actor);
 			AttackTarget = Actor;
+			Cast<AARPG_Character>(GetPawn())->SetMotionWarping(AttackTarget);
+
 		}
 	}
 	else
 	{
 		GetWorld()->GetTimerManager().SetTimer(EnemyTime, this, &AARPG_AIController::OnCleanTarget, LineOfSightTimer, false);
-		//UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Lost sight of: %s"), *Actor->GetName()));
 	}
 }
 

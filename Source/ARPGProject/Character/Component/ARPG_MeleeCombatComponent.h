@@ -48,8 +48,8 @@ public:
 
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	UFUNCTION()
-	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+	/*UFUNCTION()
+	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);*/
 	bool IsMontagePlaying() const;
 
 private:

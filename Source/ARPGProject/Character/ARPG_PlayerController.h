@@ -48,8 +48,12 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ParkourAction;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* BowDrawAction;
+	UInputAction* BowAimingAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* CrouchAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EscAction;
 
 
 	TSubclassOf<UARPG_MainWidget> HudWidgetClass;
@@ -61,8 +65,25 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
 	UUserWidget* AimWidget;
 
+	TSubclassOf<UUserWidget> MenuWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
+	UUserWidget* MenuWidget;
+
+	TSubclassOf<UUserWidget> CompleteWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
+	UUserWidget* CompleteWidget;
+
+	TSubclassOf<UUserWidget> GameOverWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI, meta = (AllowPrivateAccess = "true"))
+	UUserWidget* GameOverWidget;
+
 
 protected:
 
 	virtual void OnPossess(APawn* InPawn) override;
+
+	void InputEsc(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnGameEndEvent(bool IsComplete);
 };

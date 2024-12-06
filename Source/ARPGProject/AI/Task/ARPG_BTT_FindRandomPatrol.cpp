@@ -2,10 +2,8 @@
 
 
 #include "ARPG_BTT_FindRandomPatrol.h"
-
-#include "AIController.h"
-#include "ARPGProject/Character/ARPG_AICharacterInterface.h"
 #include "NavigationSystem.h"
+#include "ARPGProject/Character/ARPG_AICharacterInterface.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "ARPGProject/Character/ARPG_AIController.h"
 
@@ -17,14 +15,19 @@ EBTNodeResult::Type UARPG_BTT_FindRandomPatrol::ExecuteTask(UBehaviorTreeCompone
 		return Result;
 	}
 
-	if (FVector NextPatrolLocation; UNavigationSystemV1::K2_GetRandomReachablePointInRadius(GetWorld(), ControlledPawn->GetActorLocation(), NextPatrolLocation, PatrolRadius))
+	if(AICharacterInterface == nullptr)
+	{
+		return EBTNodeResult::Failed;
+	}
+
+	if (FVector NextPatrolLocation; UNavigationSystemV1::K2_GetRandomReachablePointInRadius(GetWorld(), AICharacterInterface->GetStartSpawnLocation(), NextPatrolLocation, PatrolRadius))
 	{
 		OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, NextPatrolLocation);
 		Result = EBTNodeResult::Succeeded;
 	}
 	else
 	{
-		OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, ControlledPawn->GetActorLocation());
+		OwnerComp.GetBlackboardComponent()->SetValueAsVector(AARPG_AIController::PatrolLocationKey, AICharacterInterface->GetStartSpawnLocation());
 		Result = EBTNodeResult::Succeeded;
 	}
 

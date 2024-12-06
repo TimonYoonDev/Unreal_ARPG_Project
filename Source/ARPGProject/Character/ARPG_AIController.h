@@ -15,38 +15,38 @@ class ARPGPROJECT_API AARPG_AIController : public AAIController
 	GENERATED_BODY()
 
 public:
-	AARPG_AIController();
-
-	void RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree);
-	void StopAI() const;
-
-	virtual void BeginPlay() override;
-	virtual void OnPossess(APawn* InPawn) override;
-
 	static const FName PatrolLocationKey;
 	static const FName TargetActorKey;
 	static const FName HasLineOfSightKey;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Perception", meta = (AllowPrivateAccess = "true"))
-	UAIPerceptionComponent* AIPerceptionComponent;
-	UPROPERTY(EditDefaultsOnly, Category = "Perception")
-	UAISenseConfig_Sight* SightConfig;
 
 	UPROPERTY(BlueprintReadOnly)
 	AActor* AttackTarget;
 private:
-
-	
-
+	UPROPERTY(EditDefaultsOnly, Category = "Perception")
+	UAIPerceptionComponent* AIPerceptionComponent;
+	UPROPERTY(EditDefaultsOnly, Category = "Perception")
+	UAISenseConfig_Sight* SightConfig;
 	UPROPERTY(EditDefaultsOnly, Category = "Perception")
 	UAISenseConfig_Damage* DamageConfig;
 
-	UFUNCTION()
-	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-
+	
 
 	FTimerHandle EnemyTime;
-	float LineOfSightTimer =5.f;
+	float LineOfSightTimer = 5.f;
 
+public:
+	AARPG_AIController();
+
+	void RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree);
+	void StopAI();
+
+	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;	
+	
+private:
+
+	UFUNCTION()
+	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	void OnCleanTarget();
 };

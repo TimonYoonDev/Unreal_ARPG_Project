@@ -13,11 +13,14 @@ class ARPGPROJECT_API AARPG_PlayerCharacter : public AARPG_Character
 	AARPG_PlayerCharacter();
 
 public:
-	bool bIsBowMode = false;
+	bool bIsBowAiming = false;
 	bool bIsBowDrawing = false;
 	float BowAimingPitch;
 
 private:
+	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USpringArmComponent> FinishAttackCameraBoom;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
@@ -54,16 +57,24 @@ private:
 public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void Jump() override;	
 
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
+	void InputMove(const FInputActionValue& Value);
+	void InputLook(const FInputActionValue& Value);
 	void InputLightAttack(const FInputActionValue& Value);
 	void InputHeavyAttack(const FInputActionValue& Value);
 	void InputRoll(const FInputActionValue& Value);
 	void InputGuard(const FInputActionValue& Value);
 	void InputTargetLockOn(const FInputActionValue& Value);
 	void InputParkour(const FInputActionValue& Value);
-	void InputBowMode(const FInputActionValue& Value);
+	void InputBowAiming(const FInputActionValue& Value);
+	void InputCrouch(const FInputActionValue& Value);
+
+protected:
+	virtual bool CanJumpInternal_Implementation() const override;
+
+	virtual void FinishAttack() override;
+	virtual void Assassinate() override;
 
 private:
 	void CreateArrowProjectile();
@@ -73,4 +84,6 @@ private:
 	void ParkourScanner();
 	void ParkourScannerSub(FHitResult HitResult);
 	void InteractWithObject();
+
+	void MoveCamera(USceneComponent* InTarget, USceneComponent* InParent);
 };

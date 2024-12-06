@@ -7,19 +7,36 @@
 #include "ARPG_PlayerCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ARPGProject/ARPG_GameMode.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 AARPG_PlayerController::AARPG_PlayerController()
 {
-	if(ConstructorHelpers::FClassFinder<UARPG_MainWidget>Widget (TEXT("/Game/ARPG/Blueprints/UI/WB_Main.WB_Main_C")); Widget.Succeeded())
+	if(ConstructorHelpers::FClassFinder<UARPG_MainWidget>Widget (TEXT("/Game/ARPG/Blueprints/UI/WB_MainUI.WB_MainUI_C")); Widget.Succeeded())
 	{
 		HudWidgetClass = Widget.Class;
 	}
 
-	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/ARPG/Blueprints/UI/WB_Aim.WB_Aim_C'")); Widget.Succeeded())
+	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Game/ARPG/Blueprints/UI/Character/WB_Aim.WB_Aim_C")); Widget.Succeeded())
 	{
 		AimWidgetClass = Widget.Class;
+	}
+
+	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Game/ARPG/Blueprints/UI/WB_MenuUI.WB_MenuUI_C")); Widget.Succeeded())
+	{
+		MenuWidgetClass = Widget.Class;
+	}
+
+	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Game/ARPG/Blueprints/UI/WB_CompleteUI.WB_CompleteUI_C")); Widget.Succeeded())
+	{
+		CompleteWidgetClass = Widget.Class;
+	}
+
+	if (ConstructorHelpers::FClassFinder<UUserWidget>Widget(TEXT("/Game/ARPG/Blueprints/UI/WB_GameOverUI.WB_GameOverUI_C")); Widget.Succeeded())
+	{
+		GameOverWidgetClass = Widget.Class;
 	}
 	
 }
@@ -43,8 +60,8 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::Move);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::Look);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputMove);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputLook);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, PlayerCharacter, &AARPG_PlayerCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, PlayerCharacter, &AARPG_PlayerCharacter::StopJumping);
 
@@ -54,7 +71,9 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 		EnhancedInputComponent->BindAction(DefenseAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputGuard);
 		EnhancedInputComponent->BindAction(TargetLockOnAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputTargetLockOn);
 		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputParkour);
-		EnhancedInputComponent->BindAction(BowDrawAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputBowMode);
+		EnhancedInputComponent->BindAction(BowAimingAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputBowAiming);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, PlayerCharacter, &AARPG_PlayerCharacter::InputCrouch);
+		EnhancedInputComponent->BindAction(EscAction, ETriggerEvent::Triggered, this, &AARPG_PlayerController::InputEsc);
 
 
 	}
@@ -87,6 +106,61 @@ void AARPG_PlayerController::OnPossess(APawn* InPawn)
 					AimWidget->SetVisibility(ESlateVisibility::Hidden);
 				}
 			});
+		}
+	}
+
+	if(MenuWidgetClass)
+	{
+		MenuWidget = CreateWidget<UUserWidget>(GetWorld(), MenuWidgetClass);
+		if (MenuWidget)
+		{
+			MenuWidget->SetVisibility(ESlateVisibility::Hidden);
+			MenuWidget->AddToViewport();
+		}
+	}
+
+	if(AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		GameMode->OnGameEndEvent.AddUObject(this, &AARPG_PlayerController::OnGameEndEvent);
+	}
+}
+
+void AARPG_PlayerController::InputEsc(const FInputActionValue& Value)
+{
+	if(Value.Get<bool>() == false)
+	{
+		if(MenuWidget->GetVisibility() == ESlateVisibility::Hidden)
+		{
+			MenuWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+		else
+		{
+			MenuWidget->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+}
+
+void AARPG_PlayerController::OnGameEndEvent(bool IsComplete)
+{
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.0f);
+	FInputModeUIOnly InputMode;
+	SetInputMode(InputMode);
+	SetShowMouseCursor(true);
+	
+	if(IsComplete)
+	{
+		if (CompleteWidgetClass)
+		{
+			CompleteWidget = CreateWidget<UUserWidget>(GetWorld(), CompleteWidgetClass);
+			CompleteWidget->AddToViewport();
+		}
+	}
+	else
+	{
+		if (GameOverWidgetClass)
+		{
+			GameOverWidget = CreateWidget<UUserWidget>(GetWorld(), GameOverWidgetClass);
+			GameOverWidget->AddToViewport();
 		}
 	}
 }

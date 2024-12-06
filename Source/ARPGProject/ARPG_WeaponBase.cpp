@@ -8,7 +8,7 @@ AARPG_WeaponBase::AARPG_WeaponBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>("Pivot");
-	SceneComponent->SetupAttachment(RootComponent);
+	RootComponent = SceneComponent;
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	StaticMeshComponent->SetupAttachment(SceneComponent);
 

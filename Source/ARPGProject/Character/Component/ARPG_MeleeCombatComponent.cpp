@@ -28,7 +28,7 @@ void UARPG_MeleeCombatComponent::BeginPlay()
 		return;
 	}
 	AnimInstance->OnMontageEnded.AddDynamic(this, &UARPG_MeleeCombatComponent::OnMontageEnded);
-	AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UARPG_MeleeCombatComponent::OnMontageBlendOut);
+	//AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UARPG_MeleeCombatComponent::OnMontageBlendOut);
 }
 
 void UARPG_MeleeCombatComponent::InputAttack()
@@ -81,7 +81,10 @@ void UARPG_MeleeCombatComponent::GuardComplete()
 {
 	bIsGuard = false;
 	bIsParry = false;
-	GetWorld()->GetTimerManager().ClearTimer(ParryTimerHandle);
+	if(ParryTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ParryTimerHandle);
+	}
 }
 
 bool UARPG_MeleeCombatComponent::IsGuard() const
@@ -148,14 +151,14 @@ void UARPG_MeleeCombatComponent::OnMontageEnded(UAnimMontage* Montage, bool bInt
 	bMontagePlaying = false;
 	OnMontageEndDelegate.Broadcast();
 }
-
-void UARPG_MeleeCombatComponent::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
-{
-	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Montage BlendOut : %s - %s"), bInterrupted ? TEXT("true") : TEXT("false"), *GetOwner()->GetActorNameOrLabel()));
-
-	bMontagePlaying = false;
-	
-}
+//
+//void UARPG_MeleeCombatComponent::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+//{
+//	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("Montage BlendOut : %s - %s"), bInterrupted ? TEXT("true") : TEXT("false"), *GetOwner()->GetActorNameOrLabel()));
+//
+//	bMontagePlaying = false;
+//	
+//}
 
 bool UARPG_MeleeCombatComponent::IsMontagePlaying() const
 {

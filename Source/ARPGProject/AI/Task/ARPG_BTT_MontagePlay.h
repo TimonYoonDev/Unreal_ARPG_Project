@@ -10,6 +10,9 @@ class ARPGPROJECT_API UARPG_BTT_MontagePlay : public UARPG_BTT_Base
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
+	FBlackboardKeySelector TargetActorKey;
+
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> Montage;
 
 	FDelegateHandle OnMontageCancelDelegateHandle;

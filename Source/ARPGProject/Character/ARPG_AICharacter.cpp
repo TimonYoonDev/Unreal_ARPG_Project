@@ -1,6 +1,11 @@
 #include "ARPG_AICharacter.h"
+
+#include "ARPGProject/ARPG_GameMode.h"
 #include "Components/CapsuleComponent.h"
 #include "ARPGProject/Character/HealthBarWidget.h"
+#include "Components/WidgetComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 const FName AARPG_AICharacter::LockOnPivotKey(TEXT("LockOnPivot"));
 
@@ -19,6 +24,42 @@ AARPG_AICharacter::AARPG_AICharacter()
 	LockOnWidgetComponent->SetupAttachment(GetMesh(), LockOnPivotKey);
 	LockOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
 	LockOnWidgetComponent->SetDrawSize(FVector2D(40, 40));
+
+	AssassinateWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("AssassinateWidgetComponent"));
+	AssassinateWidgetComponent->SetupAttachment(GetMesh());
+	AssassinateWidgetComponent->SetRelativeLocation(FVector(0, 0, 200));
+	AssassinateWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
+
+
+	MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this]() -> void
+	{
+		FinishAttackCollider->SetGenerateOverlapEvents(false);
+	});
+
+	// 전방에 위치할 FinishAttackCollider 초기화
+	FinishAttackCollider = CreateDefaultSubobject<USphereComponent>(TEXT("FinishAttackCollider"));
+	FinishAttackCollider->SetupAttachment(RootComponent);
+
+	// 콜라이더 크기와 위치 설정
+	FinishAttackCollider->SetSphereRadius(100.0f);  // 필요에 따라 범위를 조정
+	FinishAttackCollider->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
+	FinishAttackCollider->SetGenerateOverlapEvents(false);
+
+	// 오버랩 이벤트 바인딩
+	FinishAttackCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_AICharacter::OnFinishAttackOverlapBegin);
+	FinishAttackCollider->OnComponentEndOverlap.AddDynamic(this, &AARPG_AICharacter::OnFinishAttackOverlapEnd);
+
+	// 후방에 위치할 AssassinateCollider 초기화
+	AssassinateCollider = CreateDefaultSubobject<USphereComponent>(TEXT("AssassinateCollider"));
+	AssassinateCollider->SetupAttachment(RootComponent);
+
+	// 콜라이더 크기와 위치 설정
+	AssassinateCollider->SetSphereRadius(100.0f);  // 필요에 따라 범위를 조정
+	AssassinateCollider->SetRelativeLocation(FVector(-100.0f, 0.0f, 0.0f));
+
+	// 오버랩 이벤트 바인딩
+	AssassinateCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_AICharacter::OnAssassinateOverlapBegin);
+	AssassinateCollider->OnComponentEndOverlap.AddDynamic(this, &AARPG_AICharacter::OnAssassinateOverlapEnd);
 }
 
 bool AARPG_AICharacter::IsLockOnTarget() const
@@ -30,6 +71,7 @@ void AARPG_AICharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	SetWidget();
+	StartSpawnLocation = GetActorLocation();
 	
 }
 
@@ -58,6 +100,12 @@ float AARPG_AICharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 	return ResultDamage;
 }
 
+void AARPG_AICharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	AssassinateCollider->SetGenerateOverlapEvents(AIController->AttackTarget == nullptr);
+}
+
 void AARPG_AICharacter::SetWalkSpeed(const float InSpeed)
 {
 	GetCharacterMovement()->MaxWalkSpeed = InSpeed;
@@ -80,12 +128,44 @@ void AARPG_AICharacter::SetLockOn(const bool bIsLockOn)
 	bIsLockOnTarget = bIsLockOn;
 	GetCharacterMovement()->bUseControllerDesiredRotation = bIsLockOn;
 	GetCharacterMovement()->bOrientRotationToMovement = !bIsLockOn;
-	//GetCharacterMovement()->MaxWalkSpeed = IsLockOnTarget() ? 250 : 500;
+}
+
+FVector AARPG_AICharacter::GetStartSpawnLocation()
+{
+	return StartSpawnLocation;
+}
+
+void AARPG_AICharacter::ParryingReaction()
+{
+	Super::ParryingReaction();
+	FinishAttackCollider->SetGenerateOverlapEvents(true);
+}
+
+void AARPG_AICharacter::FinishAttackReaction()
+{
+	Super::FinishAttackReaction();
+	HealthWidgetComponent->SetVisibility(false);
+	AssassinateCollider->SetGenerateOverlapEvents(false);
+	AssassinateWidgetComponent->SetVisibility(false);
+	FinishAttackCollider->SetGenerateOverlapEvents(false);
+}
+
+void AARPG_AICharacter::AssassinateReaction()
+{
+	Super::AssassinateReaction();
+	HealthWidgetComponent->SetVisibility(false);
+	AssassinateCollider->SetGenerateOverlapEvents(false);
+	AssassinateWidgetComponent->SetVisibility(false);
 }
 
 void AARPG_AICharacter::SetLockOnWidget(const bool bShowWidget)
 {
 	LockOnWidgetComponent->SetVisibility(bShowWidget);
+}
+
+void AARPG_AICharacter::SetAssassinateWidget(const bool bShowWidget)
+{
+	AssassinateWidgetComponent->SetVisibility(bShowWidget);
 }
 
 void AARPG_AICharacter::SetWidget()
@@ -108,12 +188,19 @@ void AARPG_AICharacter::SetWidget()
 
 		if (LockOnWidgetComponent)
 		{
-			LockOnWidget = CreateWidget<UUserWidget>(GetWorld(), GameInstance->LockOnWidgetClass);
-
-			if (LockOnWidget)
+			if (UUserWidget* LockOnWidget = CreateWidget<UUserWidget>(GetWorld(), GameInstance->LockOnWidgetClass))
 			{
 				LockOnWidgetComponent->SetWidget(LockOnWidget);
 				LockOnWidgetComponent->SetVisibility(false);
+			}
+		}
+
+		if (AssassinateWidgetComponent)
+		{
+			if (UUserWidget* AssassinateWidget = CreateWidget<UUserWidget>(GetWorld(), GameInstance->AssassinateWidgetClass))
+			{
+				AssassinateWidgetComponent->SetWidget(AssassinateWidget);
+				AssassinateWidgetComponent->SetVisibility(false);
 			}
 		}
 	}
@@ -127,19 +214,72 @@ void AARPG_AICharacter::UpdateHealthBar() const
 	}
 }
 
+void AARPG_AICharacter::OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(AttributeComponent->IsDeath())
+	{
+		return;
+	}
 
-/*
- *일반 공격 첫타 자동타겟팅 두번째부터는 해당 방향으로 공격
+	if (OtherActor && OtherActor != this && OtherActor->ActorHasTag("Player"))
+	{
+		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
+		{
+			Character->SetFinishAttackTarget(this);
+		}
+	}
+}
 
-타겟팅하고 이동시에만 바라보기
+void AARPG_AICharacter::OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (AttributeComponent->IsDeath())
+	{
+		return;
+	}
 
-가만히 있을때는 안움직임
+	if (OtherActor && OtherActor != this && OtherActor->ActorHasTag("Player"))
+	{
+		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
+		{
+			Character->SetFinishAttackTarget(nullptr);
+		}
+	}
+}
 
+void AARPG_AICharacter::OnAssassinateOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
 
+	if (AttributeComponent->IsDeath())
+	{
+		return;
+	}
 
-적 AI
+	if (OtherActor && OtherActor != this && OtherActor->ActorHasTag("Player"))
+	{
+		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
+		{
+			Character->SetAssassinateTarget(this);
+		}
+	}
+}
 
-공격 사거리에 들어오면 계속 공격
+void AARPG_AICharacter::OnAssassinateOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (AttributeComponent->IsDeath())
+	{
+		return;
+	}
 
-한번씩 좌우 이동
-*/
+	if (OtherActor && OtherActor != this && OtherActor->ActorHasTag("Player"))
+	{
+		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
+		{
+			Character->SetAssassinateTarget(nullptr);
+		}
+	}
+}
+

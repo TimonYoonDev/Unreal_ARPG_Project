@@ -42,6 +42,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	ShouldMove = /*CharacterMovement->GetCurrentAcceleration() != FVector::Zero() &&*/ GroundSpeed > 3.f;
 	IsFalling = CharacterMovement->IsFalling();
+	IsCrouching = CharacterMovement->IsCrouching();
 
 	DirectionAngle = UKismetAnimationLibrary::CalculateDirection(Velocity, GetOwningActor()->GetActorRotation());
 	IsGuard = Character->IsGuard();
@@ -57,10 +58,10 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if(PlayerCharacter)
 	{
-		IsBowMode = PlayerCharacter->bIsBowMode;
-		IsBowDrawing = PlayerCharacter->bIsBowDrawing;
-		BowAimingPitch = PlayerCharacter->GetBaseAimRotation().Pitch;
-		BowAimingAlpha = IsBowMode ? 1 : 0;
+		IsAiming = PlayerCharacter->bIsBowAiming;
+		IsDrawing = PlayerCharacter->bIsBowDrawing;
+		AimingPitch = PlayerCharacter->GetBaseAimRotation().Pitch;
+		AimingAlpha = IsAiming ? 1 : 0;
 		IsStep = PlayerCharacter->IsRolling();
 	}
 	

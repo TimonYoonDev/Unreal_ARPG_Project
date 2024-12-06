@@ -1,5 +1,7 @@
 
 #include "ARPG_Character.h"
+
+#include "ARPG_AICharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -9,7 +11,6 @@
 #include "ARPGProject/ARPG_GameInstance.h"
 #include "ARPGProject/ARPG_GameMode.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
-#include "Components/SphereComponent.h"
 
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,7 +19,6 @@
 AARPG_Character::AARPG_Character()
 {
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -45,13 +45,12 @@ AARPG_Character::AARPG_Character()
 	MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this]() -> void
 	{
 		bIsKnockBack = false;
-		FinishAttackCollider->SetGenerateOverlapEvents(false);
-		/*if (bIsFinishAttack)
-		{
-			OnDeath();
-		}*/
 		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 		SetActorEnableCollision(true);
+		if(bIsFinishAttack)
+		{
+			AttributeComponent->TakeDamage(AttributeComponent->Health);
+		}
 	});
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
@@ -65,27 +64,14 @@ AARPG_Character::AARPG_Character()
 
 	PrimaryActorTick.bCanEverTick = true;
 
-
-	// 전방에 위치할 FinishAttackCollider 초기화
-	FinishAttackCollider = CreateDefaultSubobject<USphereComponent>(TEXT("FinishAttackCollider"));
-	FinishAttackCollider->SetupAttachment(RootComponent);
-
-	// 콜라이더 크기와 위치 설정
-	FinishAttackCollider->SetSphereRadius(100.0f);  // 필요에 따라 범위를 조정
-	FinishAttackCollider->SetRelativeLocation(FVector(100.0f, 0.0f, 0.0f));
-	FinishAttackCollider->SetGenerateOverlapEvents(false);
-
-	// 오버랩 이벤트 바인딩
-	FinishAttackCollider->OnComponentBeginOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapBegin);
-	FinishAttackCollider->OnComponentEndOverlap.AddDynamic(this, &AARPG_Character::OnFinishAttackOverlapEnd);
-
-	
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 }
 
 
 void AARPG_Character::BeginPlay()
 {
 	Super::BeginPlay();
+	GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode());
 	GameInstance = Cast<UARPG_GameInstance>(GetGameInstance());
 	if (IsPlayerControlled() == false)
 	{
@@ -125,7 +111,10 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		{
 			if (MeleeCombatComponent->IsGuard())
 			{
-				LockOnSystemComponent->SetTarget(EventInstigator->GetPawn());
+				if(IsPlayerControlled())
+				{
+					LockOnSystemComponent->SetTarget(EventInstigator->GetPawn());
+				}
 
 				const FVector ParticleLocation = PointDamageEvent.HitInfo.Location + (GetActorForwardVector() * 50.f);
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), GameInstance->GuardParticleSystem, ParticleLocation,
@@ -138,7 +127,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 					if (IARPG_CharacterInterface* Interface = Cast<IARPG_CharacterInterface>(EventInstigator->GetPawn()))
 					{
 						Interface->ParryingReaction();
-						if (AARPG_GameMode* GameMode = Cast<AARPG_GameMode>(GetWorld()->GetAuthGameMode()))
+						if (GameMode)
 						{
 							GameMode->StartSlowMotion(0.2f, 0.5f);
 						}
@@ -160,7 +149,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		{
 			AnimInstance->HitTrigger(LookAtRotation.Yaw);
 		}
-		MeleeCombatComponent->StopMontage();
+		//MeleeCombatComponent->StopMontage();
 		
 	}
 
@@ -176,10 +165,22 @@ void AARPG_Character::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 }
 
-void AARPG_Character::SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget)
+void AARPG_Character::SetFinishAttackTarget(AARPG_AICharacter* InFinishAttackTarget)
 {
-	bCanFinishAttack = InCanFinishAttack;
 	FinishAttackTargetActor = InFinishAttackTarget;
+}
+
+void AARPG_Character::SetAssassinateTarget(AARPG_AICharacter* InAssassinateTarget)
+{
+	if(AssassinateTarget)
+	{
+		AssassinateTarget->SetAssassinateWidget(false);
+	}
+	AssassinateTarget = InAssassinateTarget;
+	if (AssassinateTarget)
+	{
+		AssassinateTarget->SetAssassinateWidget(true);
+	}
 }
 
 void AARPG_Character::SetCharacterKey(const FName InCharacterKey)
@@ -296,13 +297,18 @@ void AARPG_Character::WeaponAttach(const FName AttachSocketName)
 void AARPG_Character::ParryingReaction()
 {
 	bIsKnockBack = true;
-	FinishAttackCollider->SetGenerateOverlapEvents(true);
 	MeleeCombatComponent->PlayMontage(MontageData.ParryingReactionMontage);
 }
 
-void AARPG_Character::FinishAttack()
+void AARPG_Character::FinishAttackReaction()
 {
 	bIsFinishAttack = true;
+	
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
+	if (AIController)
+	{
+		AIController->StopAI();
+	}
 	MeleeCombatComponent->PlayMontage(MontageData.FinishAttackReactionMontage);
 }
 
@@ -310,6 +316,32 @@ void AARPG_Character::FinishAttackDeath()
 {
 	AttributeComponent->TakeDamage(AttributeComponent->Health);
 	bIsFinishAttack = false;
+}
+
+void AARPG_Character::AssassinateReaction()
+{
+	bIsFinishAttack = true;
+	LockOnSystemComponent->SetTarget(nullptr);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
+	if (AIController)
+	{
+		AIController->StopAI();
+	}
+	MeleeCombatComponent->PlayMontage(MontageData.AssassinateReactionMontage);
+}
+
+void AARPG_Character::SetMotionWarping(const AActor* InTarget)
+{
+	FVector TargetLocation = InTarget->GetActorLocation();
+	FVector DirectionToTarget = InTarget->GetActorLocation() - GetActorLocation();
+	DirectionToTarget.Z = 0;
+	FRotator TargetRotation = DirectionToTarget.Rotation();
+	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation("Target", TargetLocation, TargetRotation);
+}
+
+void AARPG_Character::SetMotionWarping(const FVector& TargetLocation, const FRotator& TargetRotation)
+{
+	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation("Target", TargetLocation, TargetRotation);
 }
 
 void AARPG_Character::OnDeath()
@@ -323,31 +355,35 @@ void AARPG_Character::OnDeath()
 		}
 		GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
 		LockOnSystemComponent->SetTarget(nullptr);
-		AIController->StopAI();
+		if(AIController)
+		{
+			AIController->StopAI();
+		}
+		
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), GameInstance->DeathSound, GetActorLocation(), GetActorRotation());
+		GameMode->IncreaseKillCount();
+	}
+	else
+	{
+		GameMode->PlayerDeath();
 	}
 }
 
-void AARPG_Character::OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AARPG_Character::FinishAttack()
 {
-	if ( OtherActor && OtherActor != this)
-	{
-		if(AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
-		{
-			Character->SetCanFinishAttack(true, this);
-		}
-	}
+	FVector TargetLocation = FinishAttackTargetActor->GetActorLocation() + FinishAttackTargetActor->GetActorForwardVector() * 100.f;
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(TargetLocation, FinishAttackTargetActor->GetActorLocation());
+	SetMotionWarping(TargetLocation, FRotator(0, TargetRotation.Yaw, 0));
+
+	MeleeCombatComponent->PlayMontage(MontageData.FinishAttackMontage);
 }
 
-void AARPG_Character::OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void AARPG_Character::Assassinate()
 {
-	if (OtherActor && OtherActor != this)
-	{
-		if (AARPG_Character* Character = Cast<AARPG_Character>(OtherActor))
-		{
-			Character->SetCanFinishAttack(false, nullptr);
-		}
-	}
+	FVector TargetLocation = AssassinateTarget->GetActorLocation() - AssassinateTarget->GetActorForwardVector() * 50.f;
+	FVector OffsetLocation = TargetLocation + AssassinateTarget->GetActorRightVector() * 30.f;
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(TargetLocation, AssassinateTarget->GetActorLocation());
+	SetMotionWarping(OffsetLocation, FRotator(0, TargetRotation.Yaw, 0));
+
+	MeleeCombatComponent->PlayMontage(MontageData.AssassinateMontage);
 }

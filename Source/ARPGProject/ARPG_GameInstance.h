@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "ARPG_GameInstance.generated.h"
 
+class USaveLoadManager;
 class UHealthBarWidget;
 class UNiagaraSystem;
 
@@ -15,6 +16,9 @@ class ARPGPROJECT_API UARPG_GameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 	UARPG_GameInstance();
+	
+	
+
 public:
 	UPROPERTY(EditAnywhere, Category = "Common")
 	const TObjectPtr<UParticleSystem> HitParticleSystem;
@@ -31,7 +35,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Common Enemy")
 	const TSubclassOf<UUserWidget> LockOnWidgetClass;
 
+	UPROPERTY(EditAnywhere, Category = "Common Enemy")
+	const TSubclassOf<UUserWidget> AssassinateWidgetClass;
+
 private:
+	UPROPERTY()
+	USaveLoadManager* SaveLoadManager;
+
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UDataTable> WeaponDataTable;
 	UPROPERTY(EditAnywhere)
@@ -42,6 +52,8 @@ private:
 	TObjectPtr<UDataTable> MontageDataTable;
 
 public:
+	USaveLoadManager* GetSaveLoadManager();
+
 	bool TryGetWeaponData(const FString& RowName, FARPG_WeaponData& OutWeaponData) const;
 	bool TryGetCombatData(const FString& RowName, FARPG_CombatData& OutCombatData) const;
 	bool TryGetCharacterData(const FString& RowName, FARPG_CharacterData& OutData) const;

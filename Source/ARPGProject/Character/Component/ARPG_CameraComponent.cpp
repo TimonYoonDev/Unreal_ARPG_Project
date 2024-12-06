@@ -14,7 +14,7 @@ UARPG_CameraComponent::UARPG_CameraComponent()
 
 	AimCameraInfo = new FARPG_CameraInfo;
 	AimCameraInfo->TargetArmLength = 400.f;
-	AimCameraInfo->SocketOffset = FVector(100, 100, 100);
+	AimCameraInfo->SocketOffset = FVector(100, 100, 50);
 	AimCameraInfo->FieldOfView = 45;
 	AimCameraInfo->bEnableCameraLag = false;
 

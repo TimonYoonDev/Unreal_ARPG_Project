@@ -1,11 +1,20 @@
-
-
 #include "ARPG_GameInstance.h"
 
+#include "SaveLoadManager.h"
 
 
 UARPG_GameInstance::UARPG_GameInstance()
 {
+    
+}
+
+USaveLoadManager* UARPG_GameInstance::GetSaveLoadManager()
+{
+    if(SaveLoadManager == nullptr)
+    {
+        SaveLoadManager = NewObject<USaveLoadManager>();
+    }
+    return SaveLoadManager;
 }
 
 bool UARPG_GameInstance::TryGetWeaponData(const FString& RowName, FARPG_WeaponData& OutWeaponData) const
@@ -63,3 +72,4 @@ bool UARPG_GameInstance::TryGetMontageData(const FString& RowName, FARPG_Montage
 
     return false;
 }
+

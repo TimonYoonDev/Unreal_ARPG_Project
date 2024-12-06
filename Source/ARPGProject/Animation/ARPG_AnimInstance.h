@@ -45,6 +45,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
 	float DirectionAngle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Move, meta = (AllowPrivateAccess = true))
+	bool IsCrouching;
+
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
 	bool bIsMainWeaponGrip;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Equip, meta = (AllowPrivateAccess = true))
@@ -62,17 +67,19 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
 	bool IsLockOnTarget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	bool IsBowMode;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	bool IsBowDrawing;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	float BowAimingPitch;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-	float BowAimingAlpha;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Bow", meta = (AllowPrivateAccess = true))
+	bool IsAiming;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bow", meta = (AllowPrivateAccess = true))
+	bool IsDrawing;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bow", meta = (AllowPrivateAccess = true))
+	float AimingPitch;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bow", meta = (AllowPrivateAccess = true))
+	float AimingAlpha;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Step", meta = (AllowPrivateAccess = true))
 	bool IsStep;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Step", meta = (AllowPrivateAccess = true))
 	bool IsCacheStep;
+
+	
 };

@@ -11,6 +11,7 @@
 #include "ARPGProject/DataTableStructs.h"
 #include "ARPGProject/Animation/ARPG_AnimInstance.h"
 
+#include "MotionWarpingComponent.h"
 #include "Component/ARPG_AttributeComponent.h"
 #include "Component/ARPG_LockOnSystemComponent.h"
 #include "Component/ARPG_MeleeCombatComponent.h"
@@ -18,6 +19,7 @@
 
 #include "ARPG_Character.generated.h"
 
+class AARPG_GameMode;
 class USphereComponent;
 class USpringArmComponent;
 class UCameraComponent;
@@ -51,6 +53,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component, meta = (AllowPrivateAccess = "true"))
 	UARPG_LockOnSystemComponent* LockOnSystemComponent;
 
+	UPROPERTY()
+	UMotionWarpingComponent* MotionWarpingComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AARPG_WeaponBase> WeaponBase;
 
@@ -63,6 +68,9 @@ protected:
 	UARPG_GameInstance* GameInstance;
 
 	UPROPERTY()
+	AARPG_GameMode* GameMode;
+
+	UPROPERTY()
 	TObjectPtr<UAnimMontage> ParkourAnim;
 
 	UPROPERTY()
@@ -71,10 +79,12 @@ protected:
 
 
 	UPROPERTY(VisibleAnywhere, Category = "Finish Attack")
-	TObjectPtr<AActor> FinishAttackTargetActor;
+	TObjectPtr<AARPG_AICharacter> FinishAttackTargetActor;
+
+	UPROPERTY(VisibleAnywhere, Category = "Assassinate")
+	TObjectPtr<AARPG_AICharacter> AssassinateTarget;
 
 	bool bIsMainWeaponGrip;
-	bool bCanFinishAttack;
 	bool bRolling;
 private:
 	UPROPERTY(EditAnywhere)
@@ -89,11 +99,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UARPG_AnimInstance> AnimInstance;
 
-	UPROPERTY(VisibleAnywhere, Category = "Finish Attack")
-	USphereComponent* FinishAttackCollider;
 
-	UPROPERTY(VisibleAnywhere, Category = "Assassinate")
-	USphereComponent* AssassinateCollider;
 
 public:
 	void SetCharacterKey(const FName InCharacterKey);	
@@ -110,32 +116,32 @@ public:
 	virtual void AttackCheckEnd() override;
 	virtual void WeaponAttach(const FName AttachSocketName) override;
 	virtual void ParryingReaction() override;
-	virtual void FinishAttack() override;
+	virtual void FinishAttackReaction() override;
 	virtual void FinishAttackDeath() override;
-
+	virtual void AssassinateReaction() override;
+	virtual void SetMotionWarping(const AActor* InTarget) override;
+	virtual void SetMotionWarping(const FVector& TargetLocation, const FRotator& TargetRotation) override;
 
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
 	virtual void Tick(float DeltaSeconds) override;
 
-	void SetCanFinishAttack(bool InCanFinishAttack, AActor* InFinishAttackTarget);
+	void SetFinishAttackTarget(AARPG_AICharacter* InFinishAttackTarget);
+	void SetAssassinateTarget(AARPG_AICharacter* InAssassinateTarget);
+
 protected:
 	UFUNCTION()
 	virtual void OnDeath();
+
+	virtual void FinishAttack();
+	virtual void Assassinate();
 
 	AARPG_WeaponBase* CreateWeapon(const TSubclassOf<AARPG_WeaponBase>& InWeaponBase);
 	
 	
 private:
-	UFUNCTION()
-	void OnFinishAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnFinishAttackOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 
 public:
 	FORCEINLINE UARPG_MeleeCombatComponent* GetMeleeCombatComponent() const { return MeleeCombatComponent; }
