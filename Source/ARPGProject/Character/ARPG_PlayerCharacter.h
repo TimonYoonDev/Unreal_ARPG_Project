@@ -30,9 +30,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UARPG_CameraComponent> CameraComponent;
 
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USceneComponent> ArrowPos;
-
 	float PressBowDrawingPower;
 	const float PressBowDrawingMaxPower = 3.f;
 
@@ -75,6 +72,8 @@ protected:
 
 	virtual void FinishAttack() override;
 	virtual void Assassinate() override;
+
+	virtual void OnMontageEndCallBack(bool bInterrupted) override;
 
 private:
 	void CreateArrowProjectile();

@@ -18,6 +18,7 @@ public:
 	static const FName PatrolLocationKey;
 	static const FName TargetActorKey;
 	static const FName HasLineOfSightKey;
+	static const FName StartLocationKey;
 
 	UPROPERTY(BlueprintReadOnly)
 	AActor* AttackTarget;
@@ -32,21 +33,21 @@ private:
 	
 
 	FTimerHandle EnemyTime;
-	float LineOfSightTimer = 5.f;
+	float LineOfSightTimer = 2.f;
 
 public:
 	AARPG_AIController();
 
-	void RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree);
-	void StopAI();
+	virtual void RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree);
+	virtual void StopAI();
 
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;	
 	
-private:
+protected:
 
 	UFUNCTION()
-	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	void OnCleanTarget();
 };

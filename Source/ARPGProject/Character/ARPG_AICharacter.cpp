@@ -1,11 +1,8 @@
 #include "ARPG_AICharacter.h"
 
-#include "ARPGProject/ARPG_GameMode.h"
 #include "Components/CapsuleComponent.h"
 #include "ARPGProject/Character/HealthBarWidget.h"
 #include "Components/WidgetComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 
 const FName AARPG_AICharacter::LockOnPivotKey(TEXT("LockOnPivot"));
 
@@ -29,12 +26,6 @@ AARPG_AICharacter::AARPG_AICharacter()
 	AssassinateWidgetComponent->SetupAttachment(GetMesh());
 	AssassinateWidgetComponent->SetRelativeLocation(FVector(0, 0, 200));
 	AssassinateWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
-
-
-	MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this]() -> void
-	{
-		FinishAttackCollider->SetGenerateOverlapEvents(false);
-	});
 
 	// 전방에 위치할 FinishAttackCollider 초기화
 	FinishAttackCollider = CreateDefaultSubobject<USphereComponent>(TEXT("FinishAttackCollider"));
@@ -96,6 +87,7 @@ float AARPG_AICharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 			ResultDamage,GetActorLocation(),DamageCauser->GetActorLocation()
 		);
 	}
+	HealthWidgetComponent->SetVisibility(true);
 	UpdateHealthBar();
 	return ResultDamage;
 }
@@ -103,7 +95,16 @@ float AARPG_AICharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 void AARPG_AICharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	AssassinateCollider->SetGenerateOverlapEvents(AIController->AttackTarget == nullptr);
+	if(AttributeComponent->IsDeath())
+	{
+		return;
+	}
+	if(AIController)
+	{
+		AssassinateCollider->SetGenerateOverlapEvents(AIController->AttackTarget == nullptr);
+	}
+
+	
 }
 
 void AARPG_AICharacter::SetWalkSpeed(const float InSpeed)
@@ -144,6 +145,7 @@ void AARPG_AICharacter::ParryingReaction()
 void AARPG_AICharacter::FinishAttackReaction()
 {
 	Super::FinishAttackReaction();
+	AttributeComponent->TakeDamage(AttributeComponent->Health);
 	HealthWidgetComponent->SetVisibility(false);
 	AssassinateCollider->SetGenerateOverlapEvents(false);
 	AssassinateWidgetComponent->SetVisibility(false);
@@ -153,6 +155,7 @@ void AARPG_AICharacter::FinishAttackReaction()
 void AARPG_AICharacter::AssassinateReaction()
 {
 	Super::AssassinateReaction();
+	AttributeComponent->TakeDamage(AttributeComponent->Health);
 	HealthWidgetComponent->SetVisibility(false);
 	AssassinateCollider->SetGenerateOverlapEvents(false);
 	AssassinateWidgetComponent->SetVisibility(false);
@@ -166,6 +169,12 @@ void AARPG_AICharacter::SetLockOnWidget(const bool bShowWidget)
 void AARPG_AICharacter::SetAssassinateWidget(const bool bShowWidget)
 {
 	AssassinateWidgetComponent->SetVisibility(bShowWidget);
+}
+
+void AARPG_AICharacter::OnMontageEndCallBack(bool bInterrupted)
+{
+	Super::OnMontageEndCallBack(bInterrupted);
+	FinishAttackCollider->SetGenerateOverlapEvents(false);
 }
 
 void AARPG_AICharacter::SetWidget()
@@ -182,6 +191,7 @@ void AARPG_AICharacter::SetWidget()
 			if (HealthBarWidget)
 			{
 				HealthWidgetComponent->SetWidget(HealthBarWidget);
+				HealthWidgetComponent->SetVisibility(false);
 				UpdateHealthBar();
 			}
 		}

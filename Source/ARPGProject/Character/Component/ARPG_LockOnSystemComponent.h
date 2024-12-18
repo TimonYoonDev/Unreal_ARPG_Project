@@ -19,7 +19,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "LockOnInfo")
 	AARPG_Character* OwnerCharacter;
 	UPROPERTY(EditAnywhere, Category = "LockOnInfo")
-	float SphereRadius = 1000.f;
+	float SphereRadius = 500.f;
 	UPROPERTY(EditAnywhere, Category = "LockOnInfo")
 	float MaxLockOnAngle = 90.f;
 
@@ -31,6 +31,7 @@ public:
 	AActor* FindForwardClosestTarget() const;
 	AActor* FindClosestTarget() const;
 	void SetTarget(AActor* NewTargetActor);
+	AActor* GetTarget() const;
 
 protected:
 	virtual void BeginPlay() override;

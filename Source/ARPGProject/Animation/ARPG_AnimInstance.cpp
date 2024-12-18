@@ -3,10 +3,7 @@
 
 #include "ARPG_AnimInstance.h"
 
-#include <filesystem>
-
 #include "KismetAnimationLibrary.h"
-#include "AnimNotifies/AnimNotify_PlayMontageNotify.h"
 #include "ARPGProject/Character/ARPG_Character.h"
 #include "ARPGProject/Character/ARPG_PlayerCharacter.h"
 #include "GameFramework/Character.h"
@@ -40,7 +37,7 @@ void UARPG_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	Velocity = CharacterMovement->Velocity;
 	GroundSpeed = Velocity.Size2D();
 
-	ShouldMove = /*CharacterMovement->GetCurrentAcceleration() != FVector::Zero() &&*/ GroundSpeed > 3.f;
+	ShouldMove = GroundSpeed > 3.f;
 	IsFalling = CharacterMovement->IsFalling();
 	IsCrouching = CharacterMovement->IsCrouching();
 

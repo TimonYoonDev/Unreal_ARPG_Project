@@ -105,7 +105,6 @@ public:
 	void SetCharacterKey(const FName InCharacterKey);	
 
 	bool IsMainWeaponGrip() const;
-
 	bool IsRolling() const;
 	bool IsGuard() const;
 	bool IsKnockBack() const;
@@ -132,15 +131,15 @@ public:
 
 protected:
 	UFUNCTION()
+	virtual void OnMontageEndCallBack(bool bInterrupted);
+
+	UFUNCTION()
 	virtual void OnDeath();
 
 	virtual void FinishAttack();
 	virtual void Assassinate();
 
 	AARPG_WeaponBase* CreateWeapon(const TSubclassOf<AARPG_WeaponBase>& InWeaponBase);
-	
-	
-private:
 
 
 public:

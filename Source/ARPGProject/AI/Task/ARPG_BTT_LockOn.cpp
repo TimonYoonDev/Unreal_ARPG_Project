@@ -32,9 +32,7 @@ EBTNodeResult::Type UARPG_BTT_LockOn::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		{
 			AICharacterInterface->SetLockOn(false);
 		}
-	}
-
-	
+	}	
 
 	return Result;
 }

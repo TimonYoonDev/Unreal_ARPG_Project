@@ -73,4 +73,7 @@ struct FARPG_MontageData: public FTableRowBase
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UAnimMontage> AssassinateReactionMontage;
 
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UAnimMontage> HeavyAttackReactionMontage;
+
 };

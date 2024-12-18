@@ -1,5 +1,6 @@
 ﻿#include "ARPG_NoWeaponEnemyCharacter.h"
 
+#include "ARPGProject/ARPGProject.h"
 #include "Engine/DamageEvents.h"
 
 
@@ -42,7 +43,8 @@ void AARPG_NoWeaponEnemyCharacter::AttackTrace()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(GetOwner());
 
-	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, ECollisionChannel::ECC_Pawn, FCollisionShape::MakeSphere(12.f), QueryParams);
+	GetWorld()->SweepMultiByObjectType(OutHits, BeginSocketLocation, EndSocketLocation, FQuat::Identity, 
+		ECollisionChannel::ECC_Pawn, FCollisionShape::MakeSphere(12.f), QueryParams);
 
 	FName TargetTag = GetOwner()->ActorHasTag("Player") ? "Enemy" : "Player";
 
@@ -57,13 +59,12 @@ void AARPG_NoWeaponEnemyCharacter::AttackTrace()
 
 		if (OutHit.GetActor()->ActorHasTag(TargetTag))
 		{
-			FPointDamageEvent DamageEventBase;
+			FARPG_DamageEvent DamageEventBase;
 			DamageEventBase.HitInfo = OutHit;
 			FString HitActorName = OutHit.GetActor()->GetName();
 
 			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Target %s"), *StatID.ToString());
 	}
 }
 

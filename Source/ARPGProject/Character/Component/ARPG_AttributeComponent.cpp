@@ -23,9 +23,13 @@ void UARPG_AttributeComponent::BeginPlay()
 // 체력 감소 처리
 void UARPG_AttributeComponent::TakeDamage(float DamageAmount)
 {
+    if(IsDeath())
+    {
+	    return;
+    }
+
     Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
 
-    // 체력 변화 델리게이트 브로드캐스트
     OnHealthChanged.Broadcast();
 
     if (IsDeath())

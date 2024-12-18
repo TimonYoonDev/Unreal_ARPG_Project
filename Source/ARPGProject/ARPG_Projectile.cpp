@@ -1,5 +1,6 @@
 #include "ARPG_Projectile.h"
 
+#include "ARPGProject.h"
 #include "Character/ARPG_Character.h"
 #include "Engine/DamageEvents.h"
 #include "Kismet/GameplayStatics.h"
@@ -80,7 +81,7 @@ void AARPG_Projectile::AttackTrace()
 		ProjectileMovementComponent->SetActive(false);
 		if (OutHit.GetActor()->ActorHasTag(TargetTag))
 		{
-			FPointDamageEvent DamageEventBase;
+			FARPG_DamageEvent DamageEventBase;
 			DamageEventBase.HitInfo = OutHit;
 			FString HitActorName = OutHit.GetActor()->GetName();
 

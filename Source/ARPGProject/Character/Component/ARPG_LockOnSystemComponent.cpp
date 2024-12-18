@@ -52,7 +52,7 @@ AActor* UARPG_LockOnSystemComponent::FindForwardClosestTarget() const
 	FVector ForwardVector = OwnerCharacter->GetController()->GetControlRotation().Vector();
 	if (TArray<FHitResult> HitResults; GetWorld()->SweepMultiByObjectType(HitResults, StartPos, StartPos, FQuat::Identity, COQP, CS, CQP))
 	{
-		UKismetSystemLibrary::PrintString(GetWorld(), TEXT("FindForwardClosestTarget"));
+		//UKismetSystemLibrary::PrintString(GetWorld(), TEXT("FindForwardClosestTarget"));
 		for (auto HitResult : HitResults)
 		{
 			FVector DirectionToEnemy = HitResult.GetActor()->GetActorLocation() - StartPos;
@@ -67,7 +67,7 @@ AActor* UARPG_LockOnSystemComponent::FindForwardClosestTarget() const
 
 			FVector EndPos = StartPos + DirectionToEnemy * ClosestDistance;
 
-			DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
+			//DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Green, false, 1.0f, 0, 1.0f);
 
 			if (FHitResult LineTraceHitResult; GetWorld()->LineTraceSingleByChannel(LineTraceHitResult, StartPos, EndPos, ECC_Pawn, CQP))
 			{
@@ -157,6 +157,10 @@ void UARPG_LockOnSystemComponent::SetTarget(AActor* NewTargetActor)
 	SetMovementLockOnTarget();
 }
 
+AActor* UARPG_LockOnSystemComponent::GetTarget() const
+{
+	return TargetCharacter;
+}
 
 
 void UARPG_LockOnSystemComponent::BeginPlay()

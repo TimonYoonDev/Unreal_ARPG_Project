@@ -12,6 +12,7 @@
 const FName AARPG_AIController::PatrolLocationKey(TEXT("PatrolLocation"));
 const FName AARPG_AIController::TargetActorKey(TEXT("TargetActor"));
 const FName AARPG_AIController::HasLineOfSightKey(TEXT("HasLineOfSight"));
+const FName AARPG_AIController::StartLocationKey(TEXT("StartLocation"));
 
 AARPG_AIController::AARPG_AIController()
 {
@@ -19,17 +20,15 @@ AARPG_AIController::AARPG_AIController()
 
 	// 시야 감지 설정
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-	SightConfig->SightRadius = 1000.0f; // 시야 반경 설정
-	SightConfig->LoseSightRadius = 1200.0f; // 시야에서 벗어난 거리 설정
-	SightConfig->PeripheralVisionAngleDegrees = 90.0f; // 시야각 설정
-	//SightConfig->SetMaxAge(5.0f); // 감지 유지 시간
+	SightConfig->SightRadius = 1000.0f; 
+	SightConfig->LoseSightRadius = 1200.0f; 
+	SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
 	// 데미지 감지 설정
 	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("DamageConfig"));
-	//DamageConfig->SetMaxAge(2.0f); // 데미지 감지 유지 시간
 
 	// AIPerceptionComponent에 설정 추가
 	AIPerceptionComponent->ConfigureSense(*SightConfig);
@@ -45,6 +44,7 @@ void AARPG_AIController::RunAI(const TObjectPtr<UBehaviorTree>& BehaviorTree)
 	if (BehaviorTree)
 	{
 		RunBehaviorTree(BehaviorTree);
+		GetBlackboardComponent()->SetValueAsVector(StartLocationKey, GetPawn()->GetActorLocation());
 	}
 }
 void AARPG_AIController::StopAI()

@@ -56,6 +56,7 @@ public:
 	virtual void SetAssassinateWidget(const bool bShowWidget) override;
 
 protected:
+	virtual void OnMontageEndCallBack(bool bInterrupted) override;
 	virtual void BeginPlay() override;
 	virtual void OnDeath() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;

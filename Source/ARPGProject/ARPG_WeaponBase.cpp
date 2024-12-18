@@ -1,7 +1,13 @@
 #include "ARPG_WeaponBase.h"
 
+#include "ARPGProject.h"
 #include "Engine/DamageEvents.h"
 #include "Particles/ParticleSystemComponent.h"
+
+struct FAttackData
+{
+		
+};
 
 AARPG_WeaponBase::AARPG_WeaponBase()
 {
@@ -65,9 +71,8 @@ void AARPG_WeaponBase::AttackTrace()
 
 		if(OutHit.GetActor()->ActorHasTag(TargetTag))
 		{
-			FPointDamageEvent DamageEventBase;
+			FARPG_DamageEvent DamageEventBase;
 			DamageEventBase.HitInfo = OutHit;
-			FString HitActorName = OutHit.GetActor()->GetName();
 
 			OutHit.GetActor()->TakeDamage(10, DamageEventBase, GetOwner()->GetInstigatorController(), this);
 		}

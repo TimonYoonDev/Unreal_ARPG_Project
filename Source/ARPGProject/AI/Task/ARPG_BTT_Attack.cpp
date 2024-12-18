@@ -9,12 +9,17 @@ EBTNodeResult::Type UARPG_BTT_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	
 	if (const AARPG_Character* Character = Cast<AARPG_Character>(ControlledPawn); Character != nullptr)
 	{
-		Character->GetMeleeCombatComponent()->OnMontageCancelDelegate.Remove(OnMontageCancelDelegateHandle);
-		OnMontageCancelDelegateHandle = Character->GetMeleeCombatComponent()->OnMontageCancelDelegate.AddLambda([this]()->void
+		UARPG_MeleeCombatComponent* MeleeCombatComponent = Character->GetMeleeCombatComponent();
+		if(MeleeCombatComponent == nullptr)
+		{
+			return EBTNodeResult::Failed;
+		}
+		MeleeCombatComponent->OnMontageEndDelegate.Remove(OnMontageCancelDelegateHandle);
+		OnMontageCancelDelegateHandle = MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this](bool test)->void
 		{
 			FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
 		});
-		Character->GetMeleeCombatComponent()->InputAttack();
+		MeleeCombatComponent->InputAttack();
 	}
 	return EBTNodeResult::InProgress;
 }

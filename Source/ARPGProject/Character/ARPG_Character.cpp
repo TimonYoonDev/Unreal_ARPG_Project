@@ -7,6 +7,7 @@
 
 #include "GameFramework/Controller.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ARPGProject/ARPGProject.h"
 
 #include "ARPGProject/ARPG_GameInstance.h"
 #include "ARPGProject/ARPG_GameMode.h"
@@ -42,16 +43,7 @@ AARPG_Character::AARPG_Character()
 	//
 
 	MeleeCombatComponent = CreateDefaultSubobject<UARPG_MeleeCombatComponent>(TEXT("MeleeCombatComponent"));
-	MeleeCombatComponent->OnMontageEndDelegate.AddLambda([this]() -> void
-	{
-		bIsKnockBack = false;
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		SetActorEnableCollision(true);
-		if(bIsFinishAttack)
-		{
-			AttributeComponent->TakeDamage(AttributeComponent->Health);
-		}
-	});
+	MeleeCombatComponent->OnMontageEndDelegate.AddUObject(this, &AARPG_Character::OnMontageEndCallBack);
 	AttributeComponent = CreateDefaultSubobject<UARPG_AttributeComponent>(TEXT("AttributeComponent"));
 	AttributeComponent->OnDeath.AddUObject(this, &AARPG_Character::OnDeath);
 
@@ -103,9 +95,9 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 {
 	const float ResultDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	if (DamageEvent.IsOfType(FARPG_DamageEvent::ClassID))
 	{
-		const FPointDamageEvent& PointDamageEvent = static_cast<const FPointDamageEvent&>(DamageEvent);
+		const FARPG_DamageEvent& PointDamageEvent = static_cast<const FARPG_DamageEvent&>(DamageEvent);
 
 		if (MeleeCombatComponent)
 		{
@@ -149,8 +141,7 @@ float AARPG_Character::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		{
 			AnimInstance->HitTrigger(LookAtRotation.Yaw);
 		}
-		//MeleeCombatComponent->StopMontage();
-		
+		MeleeCombatComponent->StopMontage();
 	}
 
 	const FVector ForwardVector = UKismetMathLibrary::GetForwardVector(EventInstigator->GetPawn()->GetActorRotation());
@@ -180,6 +171,15 @@ void AARPG_Character::SetAssassinateTarget(AARPG_AICharacter* InAssassinateTarge
 	if (AssassinateTarget)
 	{
 		AssassinateTarget->SetAssassinateWidget(true);
+	}
+}
+
+void AARPG_Character::OnMontageEndCallBack(bool bInterrupted)
+{
+	bIsKnockBack = false;
+	if (bIsFinishAttack)
+	{
+		AttributeComponent->TakeDamage(AttributeComponent->Health);
 	}
 }
 
@@ -304,6 +304,7 @@ void AARPG_Character::FinishAttackReaction()
 {
 	bIsFinishAttack = true;
 	
+	LockOnSystemComponent->SetTarget(nullptr);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
 	if (AIController)
 	{
@@ -321,6 +322,7 @@ void AARPG_Character::FinishAttackDeath()
 void AARPG_Character::AssassinateReaction()
 {
 	bIsFinishAttack = true;
+	SetAssassinateTarget(nullptr);
 	LockOnSystemComponent->SetTarget(nullptr);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Death"));
 	if (AIController)
@@ -332,11 +334,11 @@ void AARPG_Character::AssassinateReaction()
 
 void AARPG_Character::SetMotionWarping(const AActor* InTarget)
 {
-	FVector TargetLocation = InTarget->GetActorLocation();
-	FVector DirectionToTarget = InTarget->GetActorLocation() - GetActorLocation();
-	DirectionToTarget.Z = 0;
-	FRotator TargetRotation = DirectionToTarget.Rotation();
-	MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation("Target", TargetLocation, TargetRotation);
+	FVector Direction = (InTarget->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	float Distance = FVector::Distance(InTarget->GetActorLocation(), GetActorLocation());
+	FVector TargetLocation = GetActorLocation() + Direction * (Distance - 50.f);
+	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), InTarget->GetActorLocation());
+	SetMotionWarping(TargetLocation, FRotator(0, TargetRotation.Yaw, 0));
 }
 
 void AARPG_Character::SetMotionWarping(const FVector& TargetLocation, const FRotator& TargetRotation)

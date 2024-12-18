@@ -21,13 +21,15 @@ EBTNodeResult::Type UARPG_BTT_MontagePlay::ExecuteTask(UBehaviorTreeComponent& O
 		{
 			return EBTNodeResult::Failed;
 		}
+
 		Character->SetMotionWarping(TargetActor);
-		Character->GetMeleeCombatComponent()->OnMontageCancelDelegate.Remove(OnMontageCancelDelegateHandle);
-		OnMontageCancelDelegateHandle = Character->GetMeleeCombatComponent()->OnMontageCancelDelegate.AddLambda([this]()->void
+		Character->GetMeleeCombatComponent()->OnMontageEndDelegate.Remove(OnMontageCancelDelegateHandle);
+		OnMontageCancelDelegateHandle = Character->GetMeleeCombatComponent()->OnMontageEndDelegate.AddLambda([this](bool bInterrupted)->void
 		{
 			FinishLatentTask(*CachedOwnerComp, EBTNodeResult::Succeeded);
 		});
 		Character->GetMeleeCombatComponent()->PlayMontage(Montage);
 	}
+
 	return EBTNodeResult::InProgress;
 }
